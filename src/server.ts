@@ -36,7 +36,8 @@ app.use((req, res, next) => {
 app.use(session({
     secret: "sectet-key-todo",
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    cookie: { maxAge: 1000 * 60 * 60 * 24 * 1 },
 }))
 
 app.use('/', userRouterInstance);

@@ -6,4 +6,3 @@ export interface IUserController {
     login: (req: Request, res: Response, next: NextFunction) => Response  | void
     getAllUsers: (req: Request, res: Response, next: NextFunction) => Response | void
 }
-
