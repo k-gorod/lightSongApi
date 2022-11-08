@@ -1,47 +1,62 @@
 
-// import { ProductService } from './service/index';
-// import { productRepository } from './DA/repositories/productRepository';
-import { UserRouter } from './routes';
+import { SongRouter, UserRouter } from './routes';
 import express from 'express';
 import session from 'express-session';
-import passport from 'passport';
-// import LocalStrategy from 'passport-local';
-import { UserService } from './service/UserService';
+import { UserController } from './controllers';
 import { UserRepository } from './database/repositories';
+import dotenv from 'dotenv';
+import { extractJWT } from './middleware/extractJWT';
 
-const router = express.Router();
+
+const userRouterInstance = express.Router();
+const songRouterInstance = express.Router();
+
 const app = express();
-const PORT = 3000;
+const PORT = 4444;
+const userController = new UserController(UserRepository);
+
+dotenv.config();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/', router);
+
+
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+
+    if (req.method == 'OPTIONS') {
+        res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, GET');
+        return res.status(200).json({});
+    }
+
+    next();
+});
+
 app.use(session({
-    secret: "sectet-key-to-do",
+    secret: "sectet-key-todo",
     resave: false,
     saveUninitialized: false
 }))
-app.use(passport.initialize());
-app.use(passport.session());
-// app.use(new LocalStrategy(
-//     (username, password, authCheckDone)=>{
 
-//     }
-// ));
+app.use('/', userRouterInstance);
+app.use('/songs', extractJWT, songRouterInstance);
 
-UserRouter(router, new UserService(UserRepository));
+app.use((req, res, next) => {
+    const error = new Error('Not found');
 
+    res.status(404).json({
+        message: error.message
+    });
+});
+
+
+UserRouter(userRouterInstance, userController);
+SongRouter(songRouterInstance, {});
 
 app.listen(PORT, () => {
     console.log(`Server listening ${PORT} port`)
 })
 
 
-// import connectDataBase from './DA';
-
-// import dotenv from 'dotenv';
-// dotenv.config();
-
-
-// export const connection = connectDataBase();
 
