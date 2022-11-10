@@ -6,6 +6,7 @@ import { IUserController } from "./types";
 import { excludeFields, removeUserPassword, signJWT } from "../utils";
 import { UserConfig } from "../database/entities/UserConfig";
 
+
 export class UserController implements IUserController {
     constructor(userRepository: Repository<UserEntity>){
         this.userRepository = userRepository;
@@ -103,6 +104,7 @@ export class UserController implements IUserController {
                             }
 
                             if(token) {
+                                req.session.user = users[0];
                                 return res.status(200).json({
                                     message: "Authorization successful",
                                     auth: {

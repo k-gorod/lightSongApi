@@ -1,13 +1,20 @@
+require("dotenv").config()
 
 import { SongRouter, UserRouter } from './routes';
 import express from 'express';
 import session from 'express-session';
 import { UserController } from './controllers';
 import { SongRepository, UserRepository } from './database/repositories';
-import dotenv from 'dotenv';
 import { extractJWT } from './middleware/extractJWT';
 import { SongController } from './controllers/SongController';
+import { UserEntity } from './database/entities';
 
+
+declare module 'express-session' {
+    interface SessionData {
+        user: UserEntity
+    }
+}
 
 const userRouterInstance = express.Router();
 const songRouterInstance = express.Router();
@@ -17,7 +24,6 @@ const PORT = 4444;
 const userController = new UserController(UserRepository);
 const songController = new SongController(SongRepository);
 
-dotenv.config();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
