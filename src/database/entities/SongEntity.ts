@@ -1,6 +1,6 @@
 
 import { Entity, Column, PrimaryGeneratedColumn, BaseEntity } from "typeorm"
-import { UserConfig } from "./UserConfig";
+import { SongInformation } from "./SongInformation";
 
 @Entity()
 export class SongEntity extends BaseEntity {
@@ -11,17 +11,12 @@ export class SongEntity extends BaseEntity {
     title: string;
 
     @Column()
-    lyrics: string;
+    lyrics?: string;
 
     @Column()
-    chords: string;
+    chords?: string;
 
-    @Column()
-    info: string;
+    @Column(() => SongInformation)
+    info: SongInformation;
 
-    @Column()
-    createdAt?: string;
-
-    @Column()
-    updatedAt?: string;
 }
