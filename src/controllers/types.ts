@@ -10,4 +10,5 @@ export interface IUserController {
 
 export interface ISongController {
     addSong: (req: Request, res: Response, next: NextFunction) => Response | void
+    getAllSongs:  (req: Request, res: Response, next: NextFunction) => Response | void
 }

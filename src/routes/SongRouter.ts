@@ -20,5 +20,6 @@ export const SongRouter = (router: Router, songController: ISongController ): vo
     //     })
     // })
     router.post("/add-song", songController.addSong)
+    router.get("/get-all-songs", songController.getAllSongs)
     
 }

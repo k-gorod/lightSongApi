@@ -27,7 +27,7 @@ export class SongController implements ISongController {
         this.songRepository.save(song)
             .then(()=>{
                 return res.status(201).json({
-                    message: "Success"
+                    message: "Song being added"
                 });
             }).catch((error)=>{
                 return res.status(502).json({
@@ -35,7 +35,19 @@ export class SongController implements ISongController {
                     error
                 });
             })
-
     }
 
+    getAllSongs = (req: Request, res: Response, next: NextFunction) => {
+        this.songRepository.find({})
+            .then((songList)=>{
+                return res.status(200).json(songList);
+            }).catch((error)=>{
+                return res.status(502).json({
+                    message: "502: Something went wrong",
+                    error
+                });
+            })
+    }
+
+    
 }
