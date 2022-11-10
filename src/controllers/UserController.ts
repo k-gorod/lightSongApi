@@ -3,7 +3,8 @@ import { Repository} from "typeorm";
 import { Request, Response, NextFunction } from "express";
 import bcryptjs from "bcryptjs"
 import { IUserController } from "./types";
-import { removeUserPassword, signJWT } from "../utils";
+import { excludeFields, removeUserPassword, signJWT } from "../utils";
+import { UserConfig } from "../database/entities/UserConfig";
 
 export class UserController implements IUserController {
     constructor(userRepository: Repository<UserEntity>){
@@ -37,12 +38,15 @@ export class UserController implements IUserController {
                 return res.status(500).json(hashError)
             }
             
-            const user = new UserEntity()
-            user.username = username
-            user.password = hash
+            const user = new UserEntity();
+            const config = new UserConfig();
+            user.username = username;
+            user.password = hash;
             user.createdAt = `${new Date().toJSON()}`;
             user.updatedAt = `${new Date().toJSON()}`;
-            console.log(user)
+            config.role = "user";
+            user.config = config
+
             this.userRepository.save(user)
                 .then(()=>{
                     return res.status(201).json({
@@ -57,7 +61,7 @@ export class UserController implements IUserController {
         this.userRepository.find({})
             .then((users)=>{
                 const returnData = users.reduce<{}[]>((acc, user) => {
-                    const userData = removeUserPassword(user)
+                    const userData = excludeFields(user, ["password"])
                     return [...acc, userData]
                 }, [])
 
@@ -93,7 +97,7 @@ export class UserController implements IUserController {
                     }
 
                     if(result) {
-                        signJWT(users[0], (error, token) => {
+                        signJWT(users[0], (error, token, expiresIn) => {
                             if(error) {
                                 handleUnauthorazedError(error.message)
                             }
@@ -101,8 +105,11 @@ export class UserController implements IUserController {
                             if(token) {
                                 return res.status(200).json({
                                     message: "Authorization successful",
-                                    token,
-                                    user: removeUserPassword(users[0])
+                                    auth: {
+                                        token,
+                                        expiresIn
+                                    },
+                                    user: excludeFields(users[0], ["password", "createdAt", "updatedAt", "id"])
                                 })
                             }
 

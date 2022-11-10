@@ -6,3 +6,8 @@ export interface IUserController {
     login: (req: Request, res: Response, next: NextFunction) => Response  | void
     getAllUsers: (req: Request, res: Response, next: NextFunction) => Response | void
 }
+
+
+export interface ISongController {
+    addSong: (req: Request, res: Response, next: NextFunction) => Response | void
+}

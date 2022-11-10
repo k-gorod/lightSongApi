@@ -3,9 +3,10 @@ import { SongRouter, UserRouter } from './routes';
 import express from 'express';
 import session from 'express-session';
 import { UserController } from './controllers';
-import { UserRepository } from './database/repositories';
+import { SongRepository, UserRepository } from './database/repositories';
 import dotenv from 'dotenv';
 import { extractJWT } from './middleware/extractJWT';
+import { SongController } from './controllers/SongController';
 
 
 const userRouterInstance = express.Router();
@@ -14,6 +15,7 @@ const songRouterInstance = express.Router();
 const app = express();
 const PORT = 4444;
 const userController = new UserController(UserRepository);
+const songController = new SongController(SongRepository);
 
 dotenv.config();
 
@@ -53,7 +55,7 @@ app.use((req, res, next) => {
 
 
 UserRouter(userRouterInstance, userController);
-SongRouter(songRouterInstance, {});
+SongRouter(songRouterInstance, songController);
 
 app.listen(PORT, () => {
     console.log(`Server listening ${PORT} port`)

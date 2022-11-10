@@ -3,23 +3,25 @@ import { Entity, Column, PrimaryGeneratedColumn, BaseEntity } from "typeorm"
 import { UserConfig } from "./UserConfig";
 
 @Entity()
-export class UserEntity extends BaseEntity {
+export class SongEntity extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
     @Column()
-    username: string;
+    title: string;
 
     @Column()
-    password: string;
+    lyrics: string;
 
     @Column()
-    createdAt: string;
+    chords: string;
 
     @Column()
-    updatedAt: string;
+    info: string;
 
-    @Column(()=>UserConfig)
-    config?: UserConfig
-    
+    @Column()
+    createdAt?: string;
+
+    @Column()
+    updatedAt?: string;
 }

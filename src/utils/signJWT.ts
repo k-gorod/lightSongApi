@@ -1,6 +1,6 @@
 import { UserEntity } from "../database/entities";
 import jwt from "jsonwebtoken"
-type signJWTFunction = (user: UserEntity, callback: (error: Error | null, token: string | null,) => void ) => void
+type signJWTFunction = (user: UserEntity, callback: (error: Error | null, token: string | null, expiresIn?: number) => void ) => void
 
 export const signJWT: signJWTFunction = (user, callback ) => {
     const timeSinceEpoch = new Date().getTime();
@@ -26,7 +26,7 @@ export const signJWT: signJWTFunction = (user, callback ) => {
         (error, token)=>{
             if(error)callback(error, null);
             
-            if(token)callback(null, token);
+            if(token)callback(null, token, expiresIn);
         }
         )
     }catch(error){
