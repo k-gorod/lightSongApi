@@ -1,33 +1,24 @@
-require("dotenv").config()
-
-import { SongRouter, UserRouter } from './routes';
 import express from 'express';
 import session from 'express-session';
-import { UserController } from './controllers';
+
+require("dotenv").config()
+
+import { UserController, SongController} from './controllers';
+import { credentialVerification } from './middleware/credentialVerification';
 import { SongRepository, UserRepository } from './database/repositories';
-import { extractJWT } from './middleware/extractJWT';
-import { SongController } from './controllers/SongController';
-import { UserEntity } from './database/entities';
-
-
-declare module 'express-session' {
-    interface SessionData {
-        user: UserEntity
-    }
-}
-
-const userRouterInstance = express.Router();
-const songRouterInstance = express.Router();
+import { createUserRouter, createSongRouter } from './routes';
 
 const app = express();
 const PORT = 4444;
+
 const userController = new UserController(UserRepository);
 const songController = new SongController(SongRepository);
 
+const userRouter = createUserRouter(express.Router(), userController);
+const songRouter = createSongRouter(express.Router(), songController)
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -48,8 +39,8 @@ app.use(session({
     cookie: { maxAge: 1000 * 60 * 60 * 24 * 1 },
 }))
 
-app.use('/', userRouterInstance);
-app.use('/songs', extractJWT, songRouterInstance);
+app.use('/', userRouter);
+app.use('/songs', credentialVerification, songRouter);
 
 app.use((req, res, next) => {
     const error = new Error('Not found');
@@ -60,8 +51,8 @@ app.use((req, res, next) => {
 });
 
 
-UserRouter(userRouterInstance, userController);
-SongRouter(songRouterInstance, songController);
+
+
 
 app.listen(PORT, () => {
     console.log(`Server listening ${PORT} port`)

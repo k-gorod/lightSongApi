@@ -1,9 +1,7 @@
 import { Repository} from "typeorm";
 import { Request, Response, NextFunction } from "express";
-import { ISongController } from "./types";
-import { SongEntity } from "../database/entities";
-import { SongInformation } from "../database/entities/SongInformation";
-import { excludeFields } from "../utils";
+import { SongEntity, SongInformation } from "../database/entities";
+import { ISongController } from "@types";
 
 export class SongController implements ISongController {
     constructor(songRepository: Repository<SongEntity>){
@@ -13,7 +11,7 @@ export class SongController implements ISongController {
     private readonly songRepository: Repository<SongEntity>;
 
     addSong = (req: Request, res: Response, next: NextFunction) => {
-        const { title, lyrics, chords, comments } = req.body;
+        const { title, lyrics, chords } = req.body;
 
         const song = new SongEntity();
         const info = new SongInformation();
@@ -23,7 +21,6 @@ export class SongController implements ISongController {
         info.updatedAt = `${new Date().toJSON()}`;
         info.updatedBy = user;
         info.createdBy = user;
-        info.comments = comments;
 
         song.title = title;
         song.lyrics = lyrics;

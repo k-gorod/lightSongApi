@@ -1,5 +1,6 @@
 
-import { Entity, Column, PrimaryGeneratedColumn, BaseEntity, ManyToOne } from "typeorm"
+import { Entity, Column, BaseEntity } from "typeorm"
+import { SongCommentEntity } from "./SongCommentEntity";
 import { UserEntity } from "./UserEntity";
 
 @Entity()
@@ -16,7 +17,6 @@ export class SongInformation extends BaseEntity {
     @Column(()=>UserEntity)
     updatedBy?: UserEntity
 
-    @Column()
-    comments?: string;
-    
+    // @Column("simple-array")
+    // comments?: SongCommentEntity[];
 }

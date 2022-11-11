@@ -1,10 +1,9 @@
-import { UserEntity } from "../database/entities"
+import { UserEntity, UserConfig } from "../database/entities"
 import { Repository} from "typeorm";
 import { Request, Response, NextFunction } from "express";
 import bcryptjs from "bcryptjs"
-import { IUserController } from "./types";
 import { excludeFields, removeUserPassword, signJWT } from "../utils";
-import { UserConfig } from "../database/entities/UserConfig";
+import { IUserController } from "@types";
 
 
 export class UserController implements IUserController {

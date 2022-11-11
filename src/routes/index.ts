@@ -1,2 +1,2 @@
-export { UserRouter } from './UserRouter'
-export { SongRouter } from './SongRouter'
+export { createUserRouter } from './UserRouter'
+export { createSongRouter } from './SongRouter'

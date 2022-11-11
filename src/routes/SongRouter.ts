@@ -1,25 +1,11 @@
-import { Router, Request } from 'express';
-import { ISongController } from '../controllers/types';
+import { Router } from 'express';
+import { ISongController } from '../types';
 
-// declare module 'express-session' {
-//     interface SessionData {
-//         user: number
-//     }
-// }
 
-export const SongRouter = (router: Router, songController: ISongController ): void => {  // add ISongController
-    // router.get("/", (req: Request,res)=>{
-    //     if((req.session).user) {
-    //         req.session.user++
-    //     }else {
-    //         req.session.user = 1
-    //     }
-    //     return res.send({
-    //         message: `Welcome to ${process.env.APP_HOST} - lightUp song API`,
-    //         user: req.session.user
-    //     })
-    // })
+
+export const createSongRouter = (router: Router, songController: ISongController ): Router => {
     router.post("/add-song", songController.addSong)
     router.get("/get-all-songs", songController.getAllSongs)
-    
+
+    return router;
 }

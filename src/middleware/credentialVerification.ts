@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express"
 import jwt from 'jsonwebtoken'
 
-export const extractJWT = (req: Request, res: Response, next: NextFunction) => {
+export const credentialVerification = (req: Request, res: Response, next: NextFunction) => {
 
     const token = req.headers.authorization?.split(' ')[1];
     const secret = process.env.TOKEN_SECRET!
