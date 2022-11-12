@@ -1,14 +1,19 @@
 
-import { Entity, Column, BaseEntity } from "typeorm"
+import { Entity, Column, BaseEntity, CreateDateColumn, ManyToOne, JoinColumn } from "typeorm"
+import { SongEntity } from "./SongEntity";
+import { UserEntity } from "./UserEntity";
 
 @Entity()
 export class SongCommentEntity extends BaseEntity {
-    @Column()
-    author: string;
+    @ManyToOne( () => UserEntity, ({id, username})=> ({ id, username }), {onDelete: "SET NULL"})
+    author?: UserEntity;
+
+    @ManyToOne( () => SongEntity, ({id, title})=> ({ id, title }), {onDelete: "SET NULL"})
+    song?: SongEntity;
 
     @Column()
-    text: string;
+    text?: string;
 
-    @Column()
-    createdAt: string;
+    @CreateDateColumn()
+    createdAt?: Date;
 }

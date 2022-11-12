@@ -1,6 +1,6 @@
 import { AppDataSource } from "..";
-import { UserEntity } from "../entities";
-import { SongEntity } from "../entities/SongEntity";
+import { UserEntity, SongEntity, SongCommentEntity } from "../entities";
 
 export const UserRepository = AppDataSource.getRepository(UserEntity);
 export const SongRepository = AppDataSource.getRepository(SongEntity);
+// export const SongCommentRepository = AppDataSource.getRepository(SongCommentEntity);

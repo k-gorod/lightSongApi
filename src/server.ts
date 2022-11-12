@@ -12,7 +12,8 @@ const app = express();
 const PORT = 4444;
 
 const userController = new UserController(UserRepository);
-const songController = new SongController(SongRepository);
+const songController = new SongController(SongRepository, UserRepository);
+// const commentController = new SongCommentController(SongCommentRepository);
 
 const userRouter = createUserRouter(express.Router(), userController);
 const songRouter = createSongRouter(express.Router(), songController)
@@ -40,6 +41,7 @@ app.use(session({
 }))
 
 app.use('/', userRouter);
+// app.use('/songs', songRouter);
 app.use('/songs', credentialVerification, songRouter);
 
 app.use((req, res, next) => {

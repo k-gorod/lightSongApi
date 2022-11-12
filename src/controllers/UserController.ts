@@ -1,4 +1,4 @@
-import { UserEntity, UserConfig } from "../database/entities"
+import { UserEntity } from "../database/entities"
 import { Repository} from "typeorm";
 import { Request, Response, NextFunction } from "express";
 import bcryptjs from "bcryptjs"
@@ -12,18 +12,6 @@ export class UserController implements IUserController {
     }
 
     private readonly userRepository: Repository<UserEntity>;
-
-    // getUser = async ({ username }: getUserType) => {
-    //     return await this.userRepository.findOneBy({ username })
-    // }
-
-    // addUser = async ({ username, password }: UserEntity) => {
-    //     const user = new UserEntity()
-    //     user.username = username
-    //     user.password = password
-    //     const response = await this.userRepository.save(user)
-    //     return response;
-    // }
 
     validateToken = (req: Request, res: Response, next: NextFunction) => {
         return res.status(200).json({
@@ -39,13 +27,9 @@ export class UserController implements IUserController {
             }
             
             const user = new UserEntity();
-            const config = new UserConfig();
             user.username = username;
             user.password = hash;
-            user.createdAt = `${new Date().toJSON()}`;
-            user.updatedAt = `${new Date().toJSON()}`;
-            config.role = "user";
-            user.config = config
+            user.role = "user";
 
             this.userRepository.save(user)
                 .then(()=>{
@@ -85,7 +69,9 @@ export class UserController implements IUserController {
             })
         }
 
-        this.userRepository.findBy({ username })
+        this.userRepository.find({
+            where: { username }
+        })
             .then((users)=>{
                 if(users.length !== 1) {
                     handleUnauthorazedError()

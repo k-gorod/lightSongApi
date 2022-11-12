@@ -1,6 +1,6 @@
 
-import { Entity, Column, PrimaryGeneratedColumn, BaseEntity } from "typeorm"
-import { SongInformation } from "./SongInformation";
+import { Entity, Column, UpdateDateColumn, CreateDateColumn, PrimaryGeneratedColumn, BaseEntity, ManyToOne, OneToOne, JoinColumn } from "typeorm"
+import { UserEntity } from "./UserEntity";
 
 @Entity()
 export class SongEntity extends BaseEntity {
@@ -10,13 +10,24 @@ export class SongEntity extends BaseEntity {
     @Column()
     title: string;
 
-    @Column()
+    @Column({nullable: true})
     lyrics?: string;
 
-    @Column()
+    @Column({nullable: true})
     chords?: string;
 
-    @Column(() => SongInformation)
-    info: SongInformation;
+    @Column({nullable: true})
+    description?: string;
 
+    @CreateDateColumn()
+    createdAt?: Date;
+
+    @UpdateDateColumn()
+    updatedAt?: Date;
+
+    @ManyToOne(() => UserEntity, ({id, username}) => ({id, username}), {onDelete: "SET NULL"})
+    createdBy?: UserEntity
+
+    @ManyToOne(() => UserEntity, ({id, username}) => ({id, username}), {onDelete: "SET NULL"})
+    updatedBy?: UserEntity
 }
