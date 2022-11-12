@@ -1,7 +1,7 @@
-import { UserEntity } from "../database/entities";
+import { UserEntity } from '../database/entities'
 
 declare module 'express-session' {
-    interface SessionData {
-        user: UserEntity
-    }
+  interface SessionData {
+    user: UserEntity
+  }
 }

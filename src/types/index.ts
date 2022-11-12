@@ -1,3 +1,3 @@
-export * as globalTypes from './globalTypes';
+export * as globalTypes from './globalTypes'
 
-export * from './controllers';
+export * from './controllers'

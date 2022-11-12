@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node-dev src/server.ts"
+    "start": "ts-node-dev src/server.ts",
+    "fix": "eslint --fix src/*"
   },
   "repository": {
     "type": "git",
@@ -28,11 +29,17 @@
     "reflect-metadata": "^0.1.13",
     "ts-node-dev": "^2.0.0",
     "typeorm": "^0.3.10",
-    "typescript": "^4.8.4"
+    "typescript": "*"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.2",
     "@types/express-session": "^1.17.5",
-    "@types/jsonwebtoken": "^8.5.9"
+    "@types/jsonwebtoken": "^8.5.9",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "eslint": "^8.0.1",
+    "eslint-config-standard-with-typescript": "^23.0.0",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-n": "^15.0.0",
+    "eslint-plugin-promise": "^6.0.0"
   }
 }

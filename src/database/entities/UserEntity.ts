@@ -1,31 +1,47 @@
 
-import { Entity, Column, PrimaryGeneratedColumn, BaseEntity, UpdateDateColumn, CreateDateColumn, OneToMany } from "typeorm"
+import { Entity, Column, PrimaryGeneratedColumn, BaseEntity, CreateDateColumn, OneToMany } from 'typeorm'
+
 // import { SongCommentEntity } from "./SongCommentEntity";
-import { SongEntity } from "./SongEntity";
+import { SongEntity } from './SongEntity'
 
 @Entity()
 export class UserEntity extends BaseEntity {
-    @PrimaryGeneratedColumn()
-    id: number;
+  @PrimaryGeneratedColumn()
+    id: number
 
-    @Column()
-    username: string;
+  @Column({ unique: true })
+    username: string
 
-    @Column({select: true})
-    password: string;
+  @Column({ select: false })
+    password: string
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn({ select: false })
+    createdAt: Date
 
-    @UpdateDateColumn()
-    updatedAt: Date;
+  @Column({ select: false })
+    lastSingIn: Date
 
-    // @OneToMany(() => SongCommentEntity, comment => comment.author, {onDelete: "SET NULL"})
-    // comments: SongCommentEntity[];
+  // @OneToMany(() => SongCommentEntity, comment => comment.author, {onDelete: "SET NULL"})
+  // comments: SongCommentEntity[];
 
-    @OneToMany(() => SongEntity, song => song.createdBy, {onDelete: "SET NULL"})
-    songsAdded: SongEntity[];
+  @OneToMany(() => SongEntity, song => song.createdBy, { onDelete: 'SET NULL' })
+    songsAdded: SongEntity[]
 
-    @Column()
+  @Column()
     role?: string
 }
+// {
+//     id: true,
+
+//     username: true,
+
+//     password: true,
+
+//     createdAt: true,
+
+//     updatedAt: true,
+
+//     songsAdded: true,
+
+//     role: true,
+// }
