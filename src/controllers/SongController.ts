@@ -6,8 +6,8 @@ import { ISongController } from '../types'
 
 export class SongController implements ISongController {
   constructor (
-    songRepository: Repository<SongEntity>,
-    userRepository: Repository<UserEntity>
+    userRepository: Repository<UserEntity>,
+    songRepository: Repository<SongEntity>
   ) {
     this.songRepository = songRepository
     this.userRepository = userRepository
@@ -81,6 +81,39 @@ export class SongController implements ISongController {
           message: '502: Something went wrong',
           error
         })
+      })
+  }
+
+  getSong = (req: Request, res: Response, next: NextFunction): void => {
+    this.songRepository.find({
+      select: {
+        id: true,
+        title: true,
+        lyrics: true,
+        description: true,
+        createdBy: {
+          id: true,
+          username: true
+        },
+        comments: {
+          text: true,
+          author: {
+            id: true,
+            username: true
+          },
+          createdAt: true
+        }
+      },
+      where: {
+        id: Number(req.params.id)
+      },
+      relations: ['createdBy', 'comments', 'comments.author']
+    })
+      .then(([song]) => {
+        res.status(201).json(song)
+      })
+      .catch((error) => {
+        res.status(401).json(error)
       })
   }
 }

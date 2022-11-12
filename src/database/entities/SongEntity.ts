@@ -1,6 +1,7 @@
 
-import { Entity, Column, UpdateDateColumn, CreateDateColumn, PrimaryGeneratedColumn, BaseEntity, ManyToOne } from 'typeorm'
+import { Relation, Entity, Column, OneToMany, UpdateDateColumn, CreateDateColumn, PrimaryGeneratedColumn, BaseEntity, ManyToOne } from 'typeorm'
 
+import { SongCommentEntity } from './SongCommentEntity'
 import { UserEntity } from './UserEntity'
 
 @Entity()
@@ -26,9 +27,12 @@ export class SongEntity extends BaseEntity {
   @UpdateDateColumn()
     updatedAt?: Date
 
-  @ManyToOne(() => UserEntity, ({ id, username }) => ({ id, username }), { onDelete: 'SET NULL' })
-    createdBy?: UserEntity
+  @OneToMany(() => SongCommentEntity, comment => comment.song, { onDelete: 'SET NULL' })
+    comments?: Relation<SongCommentEntity[]>
 
   @ManyToOne(() => UserEntity, ({ id, username }) => ({ id, username }), { onDelete: 'SET NULL' })
-    updatedBy?: UserEntity
+    createdBy?: Relation<UserEntity>
+
+  @ManyToOne(() => UserEntity, ({ id, username }) => ({ id, username }), { onDelete: 'SET NULL' })
+    updatedBy?: Relation<UserEntity>
 }

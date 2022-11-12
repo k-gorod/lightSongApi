@@ -7,15 +7,15 @@ type signJWTFunction = (user: UserEntity, callback: (error: Error | null, token:
 export const signJWT: signJWTFunction = (user, callback) => {
   const { TOKEN_EXPIRETIME, TOKEN_SECRET, TOKEN_ISSUER } = process.env
 
-  if (TOKEN_EXPIRETIME && TOKEN_SECRET && TOKEN_ISSUER) {
+  if (!TOKEN_EXPIRETIME || !TOKEN_SECRET || !TOKEN_ISSUER) {
     callback(new Error('Environment variable undefined'), null)
     return
   }
 
   const timeSinceEpoch = new Date().getTime()
-  const expiresIn = timeSinceEpoch + Number(TOKEN_EXPIRETIME!) * 100
-  const secret = TOKEN_SECRET!
-  const issuer = TOKEN_ISSUER!
+  const expiresIn = timeSinceEpoch + Number(TOKEN_EXPIRETIME) * 100
+  const secret = TOKEN_SECRET
+  const issuer = TOKEN_ISSUER
   const algorithm = 'HS256'
 
   try {

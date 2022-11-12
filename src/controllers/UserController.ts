@@ -1,6 +1,6 @@
 import { IUserController } from '@types'
 import bcryptjs from 'bcryptjs'
-import { Request, Response, NextFunction } from 'express'
+import { Request, Response } from 'express'
 import { Repository } from 'typeorm'
 
 import { UserEntity } from '../database/entities'
@@ -13,13 +13,13 @@ export class UserController implements IUserController {
 
   private readonly userRepository: Repository<UserEntity>
 
-  validateToken = (req: Request, res: Response, next: NextFunction): void => {
+  validateToken = (req: Request, res: Response): void => {
     res.status(200).json({
       message: 'Authorized'
     })
   }
 
-  register = (req: Request, res: Response, next: NextFunction): void => {
+  register = (req: Request, res: Response): void => {
     const { username, password } = req.body
     bcryptjs.hash(password, 12, (hashError, hash) => {
       // Wrong error type implementation. hashError can be undefined:
@@ -48,7 +48,7 @@ export class UserController implements IUserController {
     })
   }
 
-  getAllUsers = (req: Request, res: Response, next: NextFunction): void => {
+  getAllUsers = (req: Request, res: Response): void => {
     this.userRepository.find({
       select: {
         id: true,
@@ -61,14 +61,9 @@ export class UserController implements IUserController {
       relations: { songsAdded: true }
     })
       .then((users) => {
-        const returnData = users.reduce<Array<{}>>((acc, user) => {
-          const userData = excludeFields(user, ['password'])
-          return [...acc, userData]
-        }, [])
-
         return res.status(200)
           .json({
-            data: returnData
+            data: users
           })
       }).catch(() => {
         res.status(401).json({
@@ -77,7 +72,7 @@ export class UserController implements IUserController {
       })
   }
 
-  login = (req: Request, res: Response, next: NextFunction): void => {
+  login = (req: Request, res: Response): void => {
     const { username, password } = req.body
 
     const handleUnauthorazedError = (message?: string): Response => {

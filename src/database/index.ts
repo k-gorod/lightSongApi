@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { DataSource } from 'typeorm'
 
-import { SongEntity, UserEntity } from './entities'
+import { SongCommentEntity, SongEntity, UserEntity } from './entities'
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -10,7 +10,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  entities: [UserEntity, SongEntity],
+  entities: [UserEntity, SongEntity, SongCommentEntity],
   synchronize: true,
   logging: false
 })
