@@ -4,7 +4,7 @@ import { Request, Response } from 'express'
 import { Repository } from 'typeorm'
 
 import { UserEntity } from '../database/entities'
-import { excludeFields, signJWT } from '../utils'
+import { excludeFields, getMinskTime, signJWT } from '../utils'
 
 export class UserController implements IUserController {
   constructor (userRepository: Repository<UserEntity>) {
@@ -32,7 +32,7 @@ export class UserController implements IUserController {
       user.username = username
       user.password = hash
       user.role = 'user'
-      user.lastSingIn = new Date()
+      user.createdAt = getMinskTime()
 
       this.userRepository.save(user)
         .then(() =>
@@ -112,6 +112,11 @@ export class UserController implements IUserController {
 
               if (token) {
                 // user.lastSingIn = new Date()  UPDATE LAST SIGN IN
+                this.userRepository.save({
+                  id: users[0].id,
+                  lastSingIn: getMinskTime()
+                })
+                  .catch((error) => res.status(502).json({ message: '502: Database error', error }))
                 req.session.user = users[0]
                 return res.status(200).json({
                   message: 'Authorization successful',
@@ -128,5 +133,26 @@ export class UserController implements IUserController {
       }).catch((err) => {
         handleUnauthorazedError(err.message)
       })
+  }
+
+  getUserById = (req: Request, res: Response): void => {
+    if (!req.params.id) res.status(400).json({ message: 'Provide user id as url parameter' })
+    this.userRepository.find({
+      select: {
+        id: true,
+        username: true,
+        createdAt: true,
+        lastSingIn: true,
+        role: true
+      },
+      where: {
+        id: Number(req.params.id)
+      }
+    })
+      .then(([user]) =>
+        res.status(404).json(user)
+      ).catch((error) =>
+        res.status(502).json({ message: 'Could not find user', error })
+      )
   }
 }

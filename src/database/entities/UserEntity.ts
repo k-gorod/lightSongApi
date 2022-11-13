@@ -1,5 +1,5 @@
 
-import { Entity, Column, PrimaryGeneratedColumn, BaseEntity, CreateDateColumn, OneToMany, Relation } from 'typeorm'
+import { Entity, Column, PrimaryGeneratedColumn, BaseEntity, OneToMany, Relation } from 'typeorm'
 
 import { SongCommentEntity } from './SongCommentEntity'
 import { SongEntity } from './SongEntity'
@@ -15,10 +15,10 @@ export class UserEntity extends BaseEntity {
   @Column({ select: false })
     password: string
 
-  @CreateDateColumn({ select: false })
+  @Column({ select: false })
     createdAt: Date
 
-  @Column({ select: false })
+  @Column({ select: false, nullable: true })
     lastSingIn: Date
 
   @OneToMany(() => SongCommentEntity, comment => comment.author, { onDelete: 'SET NULL' })

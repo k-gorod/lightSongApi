@@ -1,5 +1,5 @@
 
-import { Relation, Entity, Column, OneToMany, UpdateDateColumn, CreateDateColumn, PrimaryGeneratedColumn, BaseEntity, ManyToOne } from 'typeorm'
+import { Relation, Entity, Column, OneToMany, PrimaryGeneratedColumn, BaseEntity, ManyToOne } from 'typeorm'
 
 import { SongCommentEntity } from './SongCommentEntity'
 import { UserEntity } from './UserEntity'
@@ -21,11 +21,11 @@ export class SongEntity extends BaseEntity {
   @Column({ nullable: true })
     description?: string
 
-  @CreateDateColumn()
-    createdAt?: Date
+  @Column({ nullable: false, select: false })
+    createdAt: Date
 
-  @UpdateDateColumn()
-    updatedAt?: Date
+  @Column({ nullable: true, select: false })
+    updatedAt: Date
 
   @OneToMany(() => SongCommentEntity, comment => comment.song, { onDelete: 'SET NULL' })
     comments?: Relation<SongCommentEntity[]>

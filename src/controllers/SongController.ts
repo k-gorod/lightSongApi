@@ -3,6 +3,7 @@ import { Repository } from 'typeorm'
 
 import { SongEntity, UserEntity } from '../database/entities'
 import { ISongController } from '../types'
+import { getMinskTime } from '../utils'
 
 export class SongController implements ISongController {
   constructor (
@@ -32,6 +33,8 @@ export class SongController implements ISongController {
           song.lyrics = lyrics
           song.chords = chords
           song.description = description
+          song.createdAt = getMinskTime()
+          song.updatedAt = getMinskTime()
 
           this.songRepository.save(song)
             .then(() =>

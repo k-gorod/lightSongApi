@@ -10,3 +10,10 @@ export const removeUserPassword = (user: UserEntity): any => {
 export const excludeFields = (object: { [key: string]: any }, excludeList: string[]): any => {
   return Object.entries(object).reduce((acc, [key, value]) => excludeList.some(el => el === key) ? acc : { ...acc, [key]: value }, {})
 }
+
+export const getMinskTime = (): Date => {
+  const date = new Date()
+  date.setUTCHours(4)
+
+  return date
+}

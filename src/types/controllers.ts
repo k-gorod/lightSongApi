@@ -5,6 +5,7 @@ export interface IUserController {
   register: (req: Request, res: Response, next: NextFunction) => void
   login: (req: Request, res: Response, next: NextFunction) => void
   getAllUsers: (req: Request, res: Response, next: NextFunction) => void
+  getUserById: (req: Request, res: Response, next: NextFunction) => void
 }
 
 export interface ISongController {

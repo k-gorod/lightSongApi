@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from 'express'
 import { Repository } from 'typeorm'
 
 import { SongCommentEntity, SongEntity, UserEntity } from '../database/entities'
+import { getMinskTime } from '../utils'
 
 export class SongCommentController implements ISongCommentController {
   constructor (
@@ -19,6 +20,9 @@ export class SongCommentController implements ISongCommentController {
   private readonly songRepository: Repository<SongEntity>
   private readonly songCommentRepository: Repository<SongCommentEntity>
 
+  /**
+   * Here is async - await implementation example
+   */
   addSongComment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     if (!req.session.user) {
       res.status(401).json({
@@ -61,6 +65,7 @@ export class SongCommentController implements ISongCommentController {
     comment.author = currentUser
     comment.song = targetSong
     comment.text = req.body.text
+    comment.createdAt = getMinskTime()
 
     const addCommentResponse = await this.songCommentRepository.save(comment)
 

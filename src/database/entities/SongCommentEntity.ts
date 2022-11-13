@@ -1,5 +1,5 @@
 
-import { Relation, Column, PrimaryGeneratedColumn, Entity, BaseEntity, CreateDateColumn, ManyToOne } from 'typeorm'
+import { Relation, Column, PrimaryGeneratedColumn, Entity, BaseEntity, ManyToOne } from 'typeorm'
 
 import { SongEntity } from './SongEntity'
 import { UserEntity } from './UserEntity'
@@ -18,6 +18,6 @@ export class SongCommentEntity extends BaseEntity {
   @Column()
     text?: string
 
-  @CreateDateColumn()
-    createdAt?: Date
+  @Column({ nullable: false, select: false })
+    createdAt: Date
 }
