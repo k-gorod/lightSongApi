@@ -37,7 +37,7 @@ export class UserController implements IUserController {
       this.userRepository.save(user)
         .then(() =>
           res.status(201).json({
-            message: 'User successfully registered'
+            message: 'UserEntity successfully registered'
           })
         ).catch((err) =>
           res.status(401).json({
@@ -96,12 +96,12 @@ export class UserController implements IUserController {
     })
       .then((users) => {
         if (users.length !== 1) {
-          handleUnauthorazedError()
+          handleUnauthorazedError('Wrong username')
         }
 
         bcryptjs.compare(password, users[0].password, (error, result) => {
           if (error) {
-            handleUnauthorazedError()
+            handleUnauthorazedError('Wrong password')
           }
 
           if (result) {
@@ -111,21 +111,25 @@ export class UserController implements IUserController {
               }
 
               if (token) {
-                // user.lastSingIn = new Date()  UPDATE LAST SIGN IN
                 this.userRepository.save({
                   id: users[0].id,
                   lastSingIn: getMinskTime()
                 })
-                  .catch((error) => res.status(502).json({ message: '502: Database error', error }))
-                req.session.user = users[0]
-                return res.status(200).json({
-                  message: 'Authorization successful',
-                  auth: {
-                    token,
-                    expiresIn
-                  },
-                  user: excludeFields(users[0], ['password', 'createdAt', 'updatedAt', 'id'])
-                })
+                  .then(() => {
+                    req.session.user = users[0]
+                    return res.status(200).json({
+                      message: 'Authorization successful',
+                      auth: {
+                        token,
+                        expiresIn
+                      },
+                      user: excludeFields(users[0], ['password', 'createdAt', 'updatedAt', 'id'])
+                    })
+                  })
+                  .catch((error) =>
+                    res.status(502)
+                      .json({ message: '502: Database error', error })
+                  )
               }
             })
           }
@@ -141,10 +145,12 @@ export class UserController implements IUserController {
       select: {
         id: true,
         username: true,
+        password: true,
+        role: true,
         createdAt: true,
-        lastSingIn: true,
-        role: true
+        lastSingIn: true
       },
+      relations: ['songsAdded'],
       where: {
         id: Number(req.params.id)
       }

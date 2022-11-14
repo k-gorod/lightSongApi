@@ -1,26 +1,26 @@
 import { Request, Response, NextFunction } from 'express'
 import { Repository } from 'typeorm'
 
-import { SongEntity, UserEntity } from '../database/entities'
+import { Song, UserEntity } from '../database/entities'
 import { ISongController } from '../types'
 import { getMinskTime } from '../utils'
 
 export class SongController implements ISongController {
   constructor (
     userRepository: Repository<UserEntity>,
-    songRepository: Repository<SongEntity>
+    songRepository: Repository<Song>
   ) {
     this.songRepository = songRepository
     this.userRepository = userRepository
   }
 
-  private readonly songRepository: Repository<SongEntity>
+  private readonly songRepository: Repository<Song>
   private readonly userRepository: Repository<UserEntity>
 
   addSong = (req: Request, res: Response, next: NextFunction): void => {
     const { title, lyrics, chords, description } = req.body
 
-    const song = new SongEntity()
+    const song = new Song()
     if (req.session.user != null) {
       this.userRepository.find({
         where: { id: req.session.user.id }
@@ -73,9 +73,10 @@ export class SongController implements ISongController {
         createdBy: {
           id: true,
           username: true
-        }
+        },
+        comments: true
       },
-      relations: ['createdBy']
+      relations: ['createdBy', 'comments']
     })
       .then((songList) => {
         return res.status(200).json(songList)

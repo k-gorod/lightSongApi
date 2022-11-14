@@ -1,3 +1,4 @@
-export { UserEntity } from './UserEntity'
-export { SongEntity } from './SongEntity'
-export { SongCommentEntity } from './SongCommentEntity'
+export { UserEntity } from './user.entity'
+export { Song } from './song.entity'
+export { SongComment } from './song_comment.entity'
+export { Playlist } from './playlist.entity'

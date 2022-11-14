@@ -2,14 +2,14 @@ import { ISongCommentController } from '@types'
 import { NextFunction, Request, Response } from 'express'
 import { Repository } from 'typeorm'
 
-import { SongCommentEntity, SongEntity, UserEntity } from '../database/entities'
+import { SongComment, Song, UserEntity } from '../database/entities'
 import { getMinskTime } from '../utils'
 
 export class SongCommentController implements ISongCommentController {
   constructor (
     userRepository: Repository<UserEntity>,
-    songRepository: Repository<SongEntity>,
-    songCommentRepository: Repository<SongCommentEntity>
+    songRepository: Repository<Song>,
+    songCommentRepository: Repository<SongComment>
   ) {
     this.songRepository = songRepository
     this.userRepository = userRepository
@@ -17,8 +17,8 @@ export class SongCommentController implements ISongCommentController {
   }
 
   private readonly userRepository: Repository<UserEntity>
-  private readonly songRepository: Repository<SongEntity>
-  private readonly songCommentRepository: Repository<SongCommentEntity>
+  private readonly songRepository: Repository<Song>
+  private readonly songCommentRepository: Repository<SongComment>
 
   /**
    * Here is async - await implementation example
@@ -60,7 +60,7 @@ export class SongCommentController implements ISongCommentController {
       return
     }
 
-    const comment = new SongCommentEntity()
+    const comment = new SongComment()
 
     comment.author = currentUser
     comment.song = targetSong
@@ -71,10 +71,10 @@ export class SongCommentController implements ISongCommentController {
 
     if (addCommentResponse) {
       res.status(201).json({
-        message: 'Comment posted'
+        message: 'SongComment posted'
       })
     } else {
-      res.status(502).json({ message: 'Comment not being posted' })
+      res.status(502).json({ message: 'SongComment not being posted' })
     }
   }
 

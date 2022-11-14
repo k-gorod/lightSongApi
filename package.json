@@ -7,10 +7,12 @@
     "start": "ts-node-dev src/server.ts",
     "fix": "eslint --fix src/*",
     "typeorm": "typeorm-ts-node-esm",
-    "migration:generate": "yarn typeorm migration:generate src/database/migrations/generated-migration -d src/database/index.ts",
+    "migration:generate": "rm -rf src/database/migrations/* && yarn typeorm migration:generate src/database/migrations/generated-migration -d src/database/index.ts",
     "migration:create": "yarn typeorm migration:create src/database/migrations/new-migration",
     "migration:run": "yarn typeorm migration:run -d src/database/index.ts",
-    "migration:revert": "yarn typeorm migration:revert -d src/database/index.ts"
+    "migration:revert": "yarn typeorm migration:revert -d src/database/index.ts",
+    "migration:sync": "yarn typeorm schema:sync -d src/database/index.ts"
+    
   },
   "repository": {
     "type": "git",
