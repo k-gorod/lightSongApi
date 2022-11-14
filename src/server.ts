@@ -42,7 +42,6 @@ app.use(session({
 }))
 
 app.use('/', userRouter)
-// app.use('/songs', songRouter);
 app.use('/songs', credentialVerification, songRouter)
 app.use('/comments', songCommentRouter)
 

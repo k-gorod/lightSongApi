@@ -13,7 +13,7 @@ export const excludeFields = (object: { [key: string]: any }, excludeList: strin
 
 export const getMinskTime = (): Date => {
   const date = new Date()
-  date.setUTCHours(4)
+  date.setTime(Date.now() + (3 * 60 * 60 * 1000))
 
   return date
 }
