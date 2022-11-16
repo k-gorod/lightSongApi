@@ -1,3 +1,3 @@
-export { createUserRouter } from './UserRouter'
-export { createSongRouter } from './SongRouter'
-export { createSongCommentRouter } from './SongCommentRouter'
+export { createUserRouter } from './user.router'
+export { createSongRouter } from './song.router'
+export { createSongCommentRouter } from './song_comment.router'

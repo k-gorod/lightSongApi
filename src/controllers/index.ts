@@ -1,3 +1,3 @@
-export { UserController } from './UserController'
-export { SongController } from './SongController'
-export { SongCommentController } from './SongCommentController'
+export { UserController } from './user.controller'
+export { SongController } from './song.controller'
+export { SongCommentController } from './song_comment.controller'

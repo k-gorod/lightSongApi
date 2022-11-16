@@ -32,7 +32,6 @@ export class UserController implements IUserController {
       user.username = username
       user.password = hash
       user.role = 'user'
-      user.createdAt = getMinskTime()
 
       this.userRepository.save(user)
         .then(() =>
@@ -77,7 +76,6 @@ export class UserController implements IUserController {
 
     const handleUnauthorazedError = (message?: string): Response => {
       return res.status(401).json({
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         message: message ?? 'Unauthorazed'
       })
     }
@@ -96,34 +94,36 @@ export class UserController implements IUserController {
     })
       .then((users) => {
         if (users.length !== 1) {
-          handleUnauthorazedError('Wrong username')
+          return handleUnauthorazedError('Wrong username')
         }
 
-        bcryptjs.compare(password, users[0].password, (error, result) => {
+        const [user] = users
+
+        bcryptjs.compare(password, user.password, (error, result) => {
           if (error) {
-            handleUnauthorazedError('Wrong password')
+            return handleUnauthorazedError('Wrong password')
           }
 
           if (result) {
-            signJWT(users[0], (error, token, expiresIn) => {
+            signJWT(user, (error, token, expiresIn) => {
               if (error != null) {
-                handleUnauthorazedError(error.message)
+                return handleUnauthorazedError(error.message)
               }
 
               if (token) {
                 this.userRepository.save({
-                  id: users[0].id,
+                  id: user.id,
                   lastSingIn: getMinskTime()
                 })
                   .then(() => {
-                    req.session.user = users[0]
+                    req.session.user = user
                     return res.status(200).json({
                       message: 'Authorization successful',
                       auth: {
                         token,
                         expiresIn
                       },
-                      user: excludeFields(users[0], ['password', 'createdAt', 'updatedAt', 'id'])
+                      user: excludeFields(user, ['password', 'createdAt', 'updatedAt', 'id'])
                     })
                   })
                   .catch((error) =>
@@ -140,17 +140,19 @@ export class UserController implements IUserController {
   }
 
   getUserById = (req: Request, res: Response): void => {
-    if (!req.params.id) res.status(400).json({ message: 'Provide user id as url parameter' })
+    if (!req.params.id) {
+      res.status(400).json({ message: 'Provide user id as url parameter' })
+      return
+    }
+
     this.userRepository.find({
       select: {
         id: true,
         username: true,
-        password: true,
-        role: true,
         createdAt: true,
         lastSingIn: true
       },
-      relations: ['songsAdded'],
+      relations: ['songsAdded', 'comments'],
       where: {
         id: Number(req.params.id)
       }
