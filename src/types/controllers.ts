@@ -18,3 +18,11 @@ export interface ISongCommentController {
   getAllComments: (req: Request, res: Response, next: NextFunction) => void
   addSongComment: (req: Request, res: Response, next: NextFunction) => void
 }
+
+export interface IPlaylistController {
+  create: (req: Request, res: Response, next: NextFunction) => void
+  get: (req: Request, res: Response, next: NextFunction) => void
+  getAll: (req: Request, res: Response, next: NextFunction) => void
+  update: (req: Request, res: Response, next: NextFunction) => void
+  delete: (req: Request, res: Response, next: NextFunction) => void
+}
