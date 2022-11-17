@@ -110,9 +110,24 @@ export class UserController implements IUserController {
 
         const [user] = users
 
+        /**
+         * add db token storing
+         * Mb it is doesn't needed
+         */
+        // if (req.session.user && user.id === req.session.user.id) {
+        //   return res.status(200).json({
+        //     message: 'Username already logged in',
+        //     auth: {
+        //       dbtoken,
+        //       req.session.user.expiresIn
+        //     },
+        //     user: excludeFields(user, ['password', 'createdAt', 'updatedAt', 'id'])
+        //   })
+        // }
+
         bcryptjs.compare(password, user.password, (error, result) => {
           if (error) {
-            return handleUnauthorazedError('Wrong password')
+            handleUnauthorazedError(error.message)
           }
 
           if (result) {
@@ -128,6 +143,7 @@ export class UserController implements IUserController {
                 })
                   .then(() => {
                     req.session.user = user
+
                     return res.status(200).json({
                       message: 'Authorization successful',
                       auth: {
@@ -143,6 +159,8 @@ export class UserController implements IUserController {
                   )
               }
             })
+          } else {
+            return handleUnauthorazedError('Wrong password')
           }
         })
       }).catch((err) => {
