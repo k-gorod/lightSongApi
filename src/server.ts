@@ -47,8 +47,8 @@ app.use(session({
 
 app.use('/', userRouter)
 app.use('/song', credentialVerification, songRouter)
-app.use('/comment', songCommentRouter)
-app.use('/playlist', playlistRouter)
+app.use('/comment', credentialVerification, songCommentRouter)
+app.use('/playlist', credentialVerification, playlistRouter)
 
 app.use((req, res, next) => {
   const error = new Error('Wrong route')

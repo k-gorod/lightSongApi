@@ -4,6 +4,7 @@ export interface IUserController {
   validateToken: (req: Request, res: Response, next: NextFunction) => void
   register: (req: Request, res: Response, next: NextFunction) => void
   login: (req: Request, res: Response, next: NextFunction) => void
+  logout: (req: Request, res: Response, next: NextFunction) => void
   getAllUsers: (req: Request, res: Response, next: NextFunction) => void
   get: (req: Request, res: Response, next: NextFunction) => void
 }

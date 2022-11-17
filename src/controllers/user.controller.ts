@@ -71,6 +71,17 @@ export class UserController implements IUserController {
       })
   }
 
+  logout = (req: Request, res: Response): void => {
+    delete res.locals.jwt
+    delete req.session.user
+
+    // implement token reset
+
+    res.status(200).json({
+      message: 'Logout successful'
+    })
+  }
+
   login = (req: Request, res: Response): void => {
     const { username, password } = req.body
 

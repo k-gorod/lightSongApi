@@ -12,8 +12,8 @@ export const signJWT: signJWTFunction = (user, callback) => {
     return
   }
 
-  const timeSinceEpoch = new Date().getTime()
-  const expiresIn = timeSinceEpoch + Number(TOKEN_EXPIRETIME) * 100
+  const timeNow = new Date().getTime()
+  const expiresIn = timeNow + Number(TOKEN_EXPIRETIME)
   const secret = TOKEN_SECRET
   const issuer = TOKEN_ISSUER
   const algorithm = 'HS256'
@@ -21,7 +21,9 @@ export const signJWT: signJWTFunction = (user, callback) => {
   try {
     jwt.sign(
       {
-        username: user.username
+        username: user.username,
+        id: user.id,
+        expiresIn
       },
       secret,
       {
