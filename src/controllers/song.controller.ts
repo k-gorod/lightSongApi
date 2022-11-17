@@ -88,13 +88,14 @@ export class SongController implements ISongController {
   }
 
   get = (req: Request, res: Response, next: NextFunction): void => {
-    const { id } = req.query
-
-    if (!id) {
+    if (!req.query || !req.query.id) {
       res.status(400).json({
         message: 'Provide id after ? sign'
       })
+      return
     }
+
+    const { id } = req.query
 
     this.songRepository.find({
       select: {
@@ -121,11 +122,20 @@ export class SongController implements ISongController {
       },
       relations: ['createdBy', 'comments']
     })
-      .then(([song]) => {
-        res.status(201).json(song)
+      .then((foundSongs) => {
+        if (foundSongs.length === 1) {
+          res.status(200).json(foundSongs)
+        } else {
+          res.status(400).json({
+            message: 'Provid correct id after ? sign'
+          })
+        }
       })
       .catch((error) => {
-        res.status(401).json(error)
+        res.status(401).json({
+          message: 'Database bad request. Try to check provided data',
+          error
+        })
       })
   }
 }

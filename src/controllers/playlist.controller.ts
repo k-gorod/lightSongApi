@@ -202,12 +202,15 @@ export class PlaylistController implements IPlaylistController {
   }
 
   delete = (req: Request, res: Response, next: NextFunction): void => {
-    const { id } = req.query
-    if (!id) {
+    if (!req.query || !req.query.id) {
       res.status(400).json({
         message: 'Provide id after ? sign'
       })
+      return
     }
+
+    const { id } = req.query
+
     this.playlistRepository
       .delete(Number(id))
       .then(() => {

@@ -140,12 +140,14 @@ export class UserController implements IUserController {
   }
 
   get = (req: Request, res: Response): void => {
-    const { id } = req.query
-
-    if (!id) {
-      res.status(400).json({ message: 'Provide user id after ? sign' })
+    if (!req.query || !req.query.id) {
+      res.status(400).json({
+        message: 'Provide id after ? sign'
+      })
       return
     }
+
+    const { id } = req.query
 
     this.userRepository.find({
       select: {
