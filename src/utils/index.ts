@@ -2,6 +2,8 @@ import { Song, UserEntity } from '../database/entities'
 
 export { signJWT } from './signJWT'
 
+export { handleExclusion } from './handleExclusion'
+
 export const removeUserPassword = (user: UserEntity): any => {
   const { password, ...theResrOfTheData } = user
   return theResrOfTheData

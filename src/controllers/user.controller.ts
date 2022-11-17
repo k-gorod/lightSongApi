@@ -4,7 +4,7 @@ import { Request, Response } from 'express'
 import { Repository } from 'typeorm'
 
 import { UserEntity } from '../database/entities'
-import { excludeFields, getMinskTime, signJWT } from '../utils'
+import { excludeFields, getMinskTime, signJWT, handleExclusion } from '../utils'
 
 export class UserController implements IUserController {
   constructor (userRepository: Repository<UserEntity>) {
@@ -14,6 +14,7 @@ export class UserController implements IUserController {
   private readonly userRepository: Repository<UserEntity>
 
   validateToken = (req: Request, res: Response): void => {
+    // todo
     res.status(200).json({
       message: 'Authorized'
     })
@@ -21,11 +22,13 @@ export class UserController implements IUserController {
 
   register = (req: Request, res: Response): void => {
     const { username, password } = req.body
-    bcryptjs.hash(password, 12, (hashError, hash) => {
-      // Wrong error type implementation. hashError can be undefined:
-      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-      if (hashError) {
-        return res.status(500).json(hashError)
+    bcryptjs.hash(password, 12, (error, hash) => {
+      if (error) {
+        handleExclusion(res)({
+          status: 500,
+          error
+        })
+        return
       }
 
       const user = new UserEntity()
@@ -38,10 +41,11 @@ export class UserController implements IUserController {
           res.status(201).json({
             message: 'UserEntity successfully registered'
           })
-        ).catch((err) =>
-          res.status(401).json({
+        ).catch((error) =>
+          handleExclusion(res)({
+            status: 401,
             message: 'Registration failed',
-            error: err
+            error
           })
         )
     })
@@ -59,14 +63,16 @@ export class UserController implements IUserController {
       },
       relations: { songsAdded: true }
     })
-      .then((users) => {
-        return res.status(200)
+      .then((users) =>
+        res.status(200)
           .json({
             data: users
           })
-      }).catch(() => {
-        res.status(401).json({
-          message: 'Unable to get users'
+      ).catch((error) => {
+        handleExclusion(res)({
+          status: 401,
+          message: 'Unable to get users',
+          error
         })
       })
   }
@@ -85,12 +91,6 @@ export class UserController implements IUserController {
   login = (req: Request, res: Response): void => {
     const { username, password } = req.body
 
-    const handleUnauthorazedError = (message?: string): Response => {
-      return res.status(401).json({
-        message: message ?? 'Unauthorazed'
-      })
-    }
-
     this.userRepository.find({
       where: { username },
       select: {
@@ -108,7 +108,11 @@ export class UserController implements IUserController {
     })
       .then((users) => {
         if (users.length !== 1) {
-          return handleUnauthorazedError('Wrong username')
+          handleExclusion(res)({
+            status: 401,
+            message: 'Wrong username'
+          })
+          return
         }
 
         const [user] = users
@@ -130,13 +134,23 @@ export class UserController implements IUserController {
 
         bcryptjs.compare(password, user.password, (error, result) => {
           if (error) {
-            handleUnauthorazedError(error.message)
+            handleExclusion(res)({
+              status: 401,
+              message: error.message,
+              error
+            })
+            return
           }
 
           if (result) {
             signJWT(user, (error, token, expiresIn) => {
               if (error != null) {
-                return handleUnauthorazedError(error.message)
+                handleExclusion(res)({
+                  status: 401,
+                  message: error.message,
+                  error
+                })
+                return
               }
 
               if (token) {
@@ -157,23 +171,34 @@ export class UserController implements IUserController {
                     })
                   })
                   .catch((error) =>
-                    res.status(502)
-                      .json({ message: '502: Database error', error })
+                    handleExclusion(res)({
+                      status: 502,
+                      message: '502: Database error',
+                      error
+                    })
                   )
               }
             })
           } else {
-            return handleUnauthorazedError('Wrong password')
+            handleExclusion(res)({
+              status: 400,
+              message: 'Wrong password'
+            })
           }
         })
-      }).catch((err) => {
-        handleUnauthorazedError(err.message)
+      }).catch((error) => {
+        handleExclusion(res)({
+          status: 502,
+          message: error.message,
+          error
+        })
       })
   }
 
   get = (req: Request, res: Response): void => {
     if (!req.query || !req.query.id) {
-      res.status(400).json({
+      handleExclusion(res)({
+        status: 400,
         message: 'Provide id after ? sign'
       })
       return
@@ -197,9 +222,13 @@ export class UserController implements IUserController {
       }
     })
       .then(([user]) =>
-        res.status(404).json(user)
+        res.status(200).json(user)
       ).catch((error) =>
-        res.status(502).json({ message: 'Could not find user', error })
+        handleExclusion(res)({
+          status: 502,
+          message: 'Could not find user',
+          error
+        })
       )
   }
 }
