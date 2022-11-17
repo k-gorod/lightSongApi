@@ -17,7 +17,7 @@ export class SongController implements ISongController {
   private readonly songRepository: Repository<Song>
   private readonly userRepository: Repository<UserEntity>
 
-  addSong = (req: Request, res: Response, next: NextFunction): void => {
+  create = (req: Request, res: Response, next: NextFunction): void => {
     const { title, lyrics, chords, description } = req.body
 
     const song = new Song()
@@ -87,7 +87,15 @@ export class SongController implements ISongController {
       })
   }
 
-  getSong = (req: Request, res: Response, next: NextFunction): void => {
+  get = (req: Request, res: Response, next: NextFunction): void => {
+    const { id } = req.query
+
+    if (!id) {
+      res.status(400).json({
+        message: 'Provide id after ? sign'
+      })
+    }
+
     this.songRepository.find({
       select: {
         id: true,
@@ -109,7 +117,7 @@ export class SongController implements ISongController {
         }
       },
       where: {
-        id: Number(req.params.id)
+        id: Number(id)
       },
       relations: ['createdBy', 'comments']
     })

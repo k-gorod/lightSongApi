@@ -24,6 +24,7 @@ export class SongCommentController implements ISongCommentController {
    * Here is async - await implementation example
    */
   addSongComment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const { songId, text } = req.body
     if (!req.session.user) {
       res.status(401).json({
         message: '401: Unauthorized'
@@ -31,16 +32,16 @@ export class SongCommentController implements ISongCommentController {
       return
     }
 
-    if (!req.query.song) {
+    if (!songId || !text) {
       res.status(400).json({
-        message: '400: Provide song id'
+        message: '400: Invalid data provided'
       })
       return
     }
 
     const [targetSong] = await this.songRepository.find({
       where: {
-        id: Number(req.query.song)
+        id: Number(songId)
       }
     })
 
@@ -64,7 +65,7 @@ export class SongCommentController implements ISongCommentController {
 
     comment.author = currentUser
     comment.song = targetSong
-    comment.text = req.body.text
+    comment.text = text
     comment.createdAt = getMinskTime()
 
     const addCommentResponse = await this.songCommentRepository.save(comment)

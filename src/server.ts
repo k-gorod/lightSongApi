@@ -46,8 +46,8 @@ app.use(session({
 }))
 
 app.use('/', userRouter)
-app.use('/songs', credentialVerification, songRouter)
-app.use('/comments', songCommentRouter)
+app.use('/song', credentialVerification, songRouter)
+app.use('/comment', songCommentRouter)
 app.use('/playlist', playlistRouter)
 
 app.use((req, res, next) => {

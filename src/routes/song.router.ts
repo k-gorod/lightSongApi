@@ -3,9 +3,9 @@ import { Router } from 'express'
 import { ISongController } from '../types'
 
 export const createSongRouter = (router: Router, songController: ISongController): Router => {
-  router.post('/add-song', songController.addSong)
+  router.post('/add', songController.create)
   router.get('/get-all', songController.getAllSongs)
-  router.get('/:id', songController.getSong)
+  router.get('/get', songController.get)
 
   return router
 }

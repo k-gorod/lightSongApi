@@ -139,9 +139,11 @@ export class UserController implements IUserController {
       })
   }
 
-  getUserById = (req: Request, res: Response): void => {
-    if (!req.params.id) {
-      res.status(400).json({ message: 'Provide user id as url parameter' })
+  get = (req: Request, res: Response): void => {
+    const { id } = req.query
+
+    if (!id) {
+      res.status(400).json({ message: 'Provide user id after ? sign' })
       return
     }
 
@@ -154,7 +156,7 @@ export class UserController implements IUserController {
       },
       relations: ['songsAdded', 'comments'],
       where: {
-        id: Number(req.params.id)
+        id: Number(id)
       }
     })
       .then(([user]) =>

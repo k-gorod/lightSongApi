@@ -8,7 +8,7 @@ export const createUserRouter = (router: Router, userController: IUserController
   router.post('/register', userController.register)
   router.post('/login', userController.login)
   router.get('/user/get-all', userController.getAllUsers)
-  router.get('/user/:id', userController.getUserById)
+  router.get('/user/get', userController.get)
 
   return router
 }

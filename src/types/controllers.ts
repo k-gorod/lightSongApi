@@ -5,13 +5,13 @@ export interface IUserController {
   register: (req: Request, res: Response, next: NextFunction) => void
   login: (req: Request, res: Response, next: NextFunction) => void
   getAllUsers: (req: Request, res: Response, next: NextFunction) => void
-  getUserById: (req: Request, res: Response, next: NextFunction) => void
+  get: (req: Request, res: Response, next: NextFunction) => void
 }
 
 export interface ISongController {
-  addSong: (req: Request, res: Response, next: NextFunction) => void
+  create: (req: Request, res: Response, next: NextFunction) => void
   getAllSongs: (req: Request, res: Response, next: NextFunction) => void
-  getSong: (req: Request, res: Response, next: NextFunction) => void
+  get: (req: Request, res: Response, next: NextFunction) => void
 }
 
 export interface ISongCommentController {

@@ -12,7 +12,6 @@ export const credentialVerification = (req: Request, res: Response, next: NextFu
           res.status(404).json(error)
         } else {
           res.locals.jwt = decoded
-          console.log(decoded)
           next()
         }
       })
