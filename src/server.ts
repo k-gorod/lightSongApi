@@ -5,7 +5,7 @@ require('dotenv').config()
 
 import { UserController, SongController, SongCommentController } from './controllers'
 import { PlaylistController } from './controllers/playlist.controller'
-import { SongRepository, UserRepository, SongCommentRepository } from './database/repositories'
+import { SongRepository, UserRepository, SongCommentRepository, PlaylistRepository } from './database/repositories'
 import { credentialVerification } from './middleware/credentialVerification'
 import { createUserRouter, createSongRouter, createSongCommentRouter } from './routes'
 import { createPlaylistRouter } from './routes/playlist.router'
@@ -16,7 +16,7 @@ const PORT = 4444
 const userController = new UserController(UserRepository)
 const songController = new SongController(UserRepository, SongRepository)
 const commentController = new SongCommentController(UserRepository, SongRepository, SongCommentRepository)
-const playlistController = new PlaylistController(UserRepository, SongRepository, SongCommentRepository)
+const playlistController = new PlaylistController(UserRepository, SongRepository, PlaylistRepository)
 
 const userRouter = createUserRouter(express.Router(), userController)
 const songRouter = createSongRouter(express.Router(), songController)
@@ -51,7 +51,7 @@ app.use('/comments', songCommentRouter)
 app.use('/playlists', playlistRouter)
 
 app.use((req, res, next) => {
-  const error = new Error('Not found')
+  const error = new Error('Wrong route')
 
   res.status(404).json({
     message: error.message

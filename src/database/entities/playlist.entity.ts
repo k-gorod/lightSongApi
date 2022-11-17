@@ -1,5 +1,5 @@
 
-import { Relation, Column, PrimaryGeneratedColumn, Entity, BaseEntity, ManyToOne, ManyToMany } from 'typeorm'
+import { Relation, Column, PrimaryGeneratedColumn, Entity, BaseEntity, ManyToOne, ManyToMany, CreateDateColumn, UpdateDateColumn, JoinTable } from 'typeorm'
 
 import { Song } from './song.entity'
 import { UserEntity } from './user.entity'
@@ -9,27 +9,31 @@ export class Playlist extends BaseEntity {
   @PrimaryGeneratedColumn()
     id: number
 
-  @Column({ default: false })
+  @Column({ nullable: false })
+    name!: string
+
+  @Column({ default: false, nullable: false })
     isPrivat!: boolean
 
-  @Column('simple-array')
+  @Column('simple-array', { nullable: true })
     tags?: string[]
 
-  @Column({ select: false })
+  @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date
 
-  @Column({ select: false })
+  @UpdateDateColumn({ type: 'timestamptz', select: false })
     updatedAt: Date
 
-  @Column()
-    description: string
+  @Column({ nullable: true })
+    description?: string
 
-  @ManyToOne(() => UserEntity, user => user.createdPlaylists, { onDelete: 'SET NULL' })
+  @ManyToOne(() => UserEntity, user => user.createdPlaylists, { nullable: false })
     createdBy?: Relation<UserEntity>
 
-  @ManyToMany(() => UserEntity, user => user.likedPlaylists, { onDelete: 'SET NULL' })
+  @ManyToMany(() => UserEntity, user => user.likedPlaylists, { nullable: true })
     likedBy?: Relation<UserEntity[]>
 
-  @ManyToMany(() => Song, song => song.usedInPlaylists, { onDelete: 'SET NULL' })
+  @ManyToMany(() => Song, song => song.usedInPlaylists, { nullable: true })
+  @JoinTable()
     songlist: Relation<Song[]>
 }

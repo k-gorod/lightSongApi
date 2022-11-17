@@ -1,5 +1,5 @@
 
-import { Entity, CreateDateColumn, Column, PrimaryGeneratedColumn, BaseEntity, OneToMany, Relation, ManyToMany } from 'typeorm'
+import { Entity, CreateDateColumn, Column, PrimaryGeneratedColumn, BaseEntity, OneToMany, Relation, ManyToMany, JoinTable } from 'typeorm'
 
 import { Playlist } from './playlist.entity'
 import { Song } from './song.entity'
@@ -31,18 +31,11 @@ export class UserEntity extends BaseEntity {
   @OneToMany(() => Song, song => song.createdBy, { onDelete: 'SET NULL' })
     songsAdded: Relation<Song[]>
 
-  @OneToMany(() => Playlist, playlist => playlist.createdBy, { onDelete: 'SET NULL' })
+  @OneToMany(() => Playlist, playlist => playlist.createdBy)
+  @JoinTable()
     createdPlaylists: Relation<Playlist[]>
 
-  @ManyToMany(() => Playlist, playlist => playlist.likedBy, { onDelete: 'SET NULL' })
+  @ManyToMany(() => Playlist, playlist => playlist.likedBy)
+  @JoinTable()
     likedPlaylists: Relation<Playlist[]>
 }
-// {
-//     id: true,
-//     username: true,
-//     password: true,
-//     createdAt: true,
-//     updatedAt: true,
-//     songsAdded: true,
-//     role: true,
-// }

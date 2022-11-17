@@ -62,7 +62,6 @@ export class SongController implements ISongController {
 
   getAllSongs = (req: Request, res: Response, next: NextFunction): void => {
     this.songRepository.find({
-      relationLoadStrategy: 'join',
       select: {
         id: true,
         title: true,
@@ -94,6 +93,7 @@ export class SongController implements ISongController {
         id: true,
         title: true,
         lyrics: true,
+        chords: true,
         description: true,
         createdBy: {
           id: true,
@@ -111,7 +111,7 @@ export class SongController implements ISongController {
       where: {
         id: Number(req.params.id)
       },
-      relations: ['createdBy', 'comments', 'comments.author']
+      relations: ['createdBy', 'comments']
     })
       .then(([song]) => {
         res.status(201).json(song)

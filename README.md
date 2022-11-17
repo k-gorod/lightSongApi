@@ -18,14 +18,11 @@ $ node -v
 ```
 This command should return installed node version. *( for now it is v19.0.1 )*
 
-2. ### Install Yarn
-```bash
-$ npm install yarn
-```
-3. ### Install Git
+
+2. ### Install Git
 Go [here](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git), choose your OS and follow the instructions .
 
-4. ### Clone repository
+3. ### Clone repository
 
 Change working directory to where you want to store the project:
 ```bash
@@ -35,14 +32,16 @@ Clone project
 ```bash
 $ git clone git@github.com:k-gorod/lightSongApi.git
 ```
-5. ### Install dependencies
+4. ### Install dependencies
 
 ```bash
 $ cd lightSongApi
 
+$ npm install yarn
+
 $ yarn
 ```
-6. ### Start project
+5. ### Start project
 ```bash
 yarn start
 ```

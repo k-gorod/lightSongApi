@@ -2,56 +2,223 @@ import { IPlaylistController } from '@types'
 import { NextFunction, Request, Response } from 'express'
 import { Repository } from 'typeorm'
 
-import { SongComment, Song, UserEntity } from '../database/entities'
+import { Song, UserEntity, Playlist } from '../database/entities'
+import { extractExistingSongs, extractReqiredSongs, getSongListIds } from '../utils'
 // import { getMinskTime } from '../utils'
 
 export class PlaylistController implements IPlaylistController {
   constructor (
     userRepository: Repository<UserEntity>,
     songRepository: Repository<Song>,
-    songCommentRepository: Repository<SongComment>
+    playlistRepository: Repository<Playlist>
   ) {
     this.songRepository = songRepository
     this.userRepository = userRepository
-    this.songCommentRepository = songCommentRepository
+    this.playlistRepository = playlistRepository
   }
 
   private readonly userRepository: Repository<UserEntity>
   private readonly songRepository: Repository<Song>
-  private readonly songCommentRepository: Repository<SongComment>
+  private readonly playlistRepository: Repository<Playlist>
 
   create = (req: Request, res: Response, next: NextFunction): void => {
-    console.log('create')
-    res.status(501).json({
-      message: 'create'
-    })
+    const { name, isPrivat, tags, description, songs } = req.body
+
+    if (req.session.user) {
+      this.userRepository.find({
+        where: {
+          id: req.session.user.id
+        }
+      })
+        .then(([createdBy]) => {
+          this.songRepository.find({
+            where: getSongListIds(songs)
+          })
+            .then(songlist => {
+              this.playlistRepository.save({
+                name,
+                isPrivat,
+                tags,
+                description,
+                songlist,
+                createdBy
+              })
+                .then((dbAnswer) =>
+                  res.status(201).json({
+                    message: 'Playlist created'
+                  })
+                )
+                .catch((err) => {
+                  res.status(400).json({
+                    message: 'Could not create playlist',
+                    err
+                  })
+                })
+            }).catch((err) => {
+              res.status(500).json({
+                message: 'DB failure while getting songs',
+                err
+              })
+            })
+        })
+        .catch((err) => {
+          res.status(401).json({
+            message: 'Could not find user. Update session',
+            err
+          })
+        })
+    } else {
+      res.status(501).json({
+        message: 'Login please. Session storing not implemented'
+      })
+    }
   }
 
   get = (req: Request, res: Response, next: NextFunction): void => {
-    console.log('get')
-    res.status(501).json({
-      message: 'get'
+    if (!req.query.id) {
+      res.status(400).json({
+        message: 'Provide id after ? sign'
+      })
+    }
+    this.playlistRepository.find({
+      where: {
+        id: Number(req.query.id)
+      }
     })
+      .then((foundPlaylists) => {
+        if (foundPlaylists.length === 1) {
+          res.status(200).json({
+            playlist: foundPlaylists[0]
+          })
+        } else {
+          res.status(404).json({
+            message: 'Could not find appropriate playlist. Check provided data'
+          })
+        }
+      })
+      .catch((err) => {
+        res.status(500).json({
+          message: 'Unable to get Playlist',
+          err
+        })
+      })
   }
 
   getAll = (req: Request, res: Response, next: NextFunction): void => {
-    console.log('getAll')
-    res.status(501).json({
-      message: 'getAll'
+    this.playlistRepository.find({
+      relations: ['createdBy', 'songlist', 'likedBy']
     })
+      .then((playlists) => {
+        res.status(200).json({
+          playlists
+        })
+      })
+      .catch((err) => {
+        res.status(500).json({
+          message: 'Unable to get Playlists',
+          err
+        })
+      })
   }
 
   update = (req: Request, res: Response, next: NextFunction): void => {
-    console.log('update')
-    res.status(501).json({
-      message: 'update'
+    const { id, name, isPrivat, tags, description, likedBy, songlist } = req.body
+
+    this.playlistRepository.findOne({
+      where: {
+        id: Number(id)
+      },
+      relations: ['likedBy', 'songlist']
     })
+      .then((playlist) => {
+        if (playlist != null) {
+          this.userRepository.findOne({
+            where: {
+              id: likedBy ? Number(likedBy.id) : 0
+            }
+          })
+            .then((user) => {
+              const songsToAdd = extractReqiredSongs(songlist, playlist.songlist)
+              const existingSongs = extractExistingSongs(songlist, playlist.songlist) // left only existing in database songs
+
+              console.log(songsToAdd)
+
+              const updatePlaylist = (newSongs: Song[] = []): void => {
+                playlist.name = name ?? playlist.name
+                playlist.isPrivat = isPrivat ?? playlist.isPrivat
+                playlist.tags = tags ?? playlist.tags
+                playlist.description = description ?? playlist.description
+                playlist.songlist = [...existingSongs, ...newSongs]
+                playlist.likedBy = user ? [...playlist.likedBy!, user] : playlist.likedBy
+
+                this.playlistRepository.save(playlist)
+                  .then(() => {
+                    res.status(200).json({
+                      message: 'Playlist Updated'
+                    })
+                  })
+                  .catch((error) => {
+                    res.status(400).json({
+                      message: 'Playlist update failure',
+                      error
+                    })
+                  })
+              }
+
+              if (songsToAdd.length === 0) {
+                updatePlaylist()
+              } else {
+                this.songRepository.find({
+                  where: songsToAdd
+                })
+                  .then((newSongs) => {
+                    updatePlaylist(newSongs)
+                  })
+                  .catch((error) => {
+                    res.status(500).json({
+                      message: 'Could not get songs',
+                      error
+                    })
+                  })
+              }
+            })
+            .catch(() => {
+              res.status(400).json({
+                message: 'User serach error'
+              })
+            })
+        } else {
+          res.status(400).json({
+            message: 'Invalid playlist ID'
+          })
+        }
+      })
+      .catch((error) => {
+        res.status(400).json({
+          message: 'Could not find Playlist',
+          error
+        })
+      })
   }
 
   delete = (req: Request, res: Response, next: NextFunction): void => {
-    console.log('delete')
-    res.status(501).json({
-      message: 'delete'
-    })
+    const { id } = req.query
+    if (!id) {
+      res.status(400).json({
+        message: 'Provide id after ? signe'
+      })
+    }
+    this.playlistRepository
+      .delete(Number(id))
+      .then(() => {
+        res.status(200).json({
+          message: 'Successfully deleted'
+        })
+      })
+      .catch(() => {
+        res.status(404).json({
+          message: 'Unable to deleted'
+        })
+      })
   }
 }
