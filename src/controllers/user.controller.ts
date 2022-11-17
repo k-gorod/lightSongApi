@@ -100,7 +100,10 @@ export class UserController implements IUserController {
         createdAt: true,
         lastSingIn: true,
         songsAdded: true,
-        role: true
+        role: true,
+        config: {
+          darkMode: true
+        }
       }
     })
       .then((users) => {
@@ -150,7 +153,7 @@ export class UserController implements IUserController {
                         token,
                         expiresIn
                       },
-                      user: excludeFields(user, ['password', 'createdAt', 'updatedAt', 'id'])
+                      user: excludeFields(user, ['password', 'createdAt', 'updatedAt'])
                     })
                   })
                   .catch((error) =>
@@ -183,7 +186,10 @@ export class UserController implements IUserController {
         id: true,
         username: true,
         createdAt: true,
-        lastSingIn: true
+        lastSingIn: true,
+        config: {
+          darkMode: true
+        }
       },
       relations: ['songsAdded', 'comments'],
       where: {

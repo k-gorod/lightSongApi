@@ -1,4 +1,5 @@
 
+import { userConfig } from '@types'
 import { Entity, CreateDateColumn, Column, PrimaryGeneratedColumn, BaseEntity, OneToMany, Relation, ManyToMany, JoinTable } from 'typeorm'
 
 import { Playlist } from './playlist.entity'
@@ -24,6 +25,9 @@ export class UserEntity extends BaseEntity {
 
   @Column({ select: false, nullable: true })
     lastSingIn: Date
+
+  @Column('simple-json', { select: false, nullable: true })
+    config?: userConfig
 
   @OneToMany(() => SongComment, comment => comment.author, { onDelete: 'SET NULL', nullable: true })
     comments: Relation<SongComment[]>
