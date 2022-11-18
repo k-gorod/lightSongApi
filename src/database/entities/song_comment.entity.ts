@@ -15,12 +15,12 @@ export class SongComment extends BaseEntity {
   @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date
 
+  @Column({ nullable: true })
+    commentReplyId: number
+
   @ManyToOne(() => UserEntity, user => user.comments, { onDelete: 'SET NULL' })
     author?: Relation<UserEntity>
 
   @ManyToOne(() => Song, song => song.comments, { onDelete: 'SET NULL', nullable: true })
     song?: Relation<Song>
-
-  @Column({ nullable: true })
-    commentReplyId: number
 }

@@ -4,7 +4,7 @@ import { Request, Response } from 'express'
 import { Repository } from 'typeorm'
 
 import { UserEntity } from '../database/entities'
-import { excludeFields, getMinskTime, signJWT, handleExclusion } from '../utils'
+import { excludeFields, getMinskTime, signJWT, handleExclusion, deleteHandler } from '../utils'
 
 export class UserController implements IUserController {
   constructor (userRepository: Repository<UserEntity>) {
@@ -51,7 +51,7 @@ export class UserController implements IUserController {
     })
   }
 
-  getAllUsers = (req: Request, res: Response): void => {
+  getAll = (req: Request, res: Response): void => {
     this.userRepository.find({
       select: {
         id: true,
@@ -221,14 +221,25 @@ export class UserController implements IUserController {
         id: Number(id)
       }
     })
-      .then(([user]) =>
+      .then(([user]) => {
+        if (!user) {
+          handleExclusion(res)({
+            status: 404,
+            message: 'Could not find user'
+          })
+        }
         res.status(200).json(user)
+      }
       ).catch((error) =>
         handleExclusion(res)({
-          status: 502,
+          status: 401,
           message: 'Could not find user',
           error
         })
       )
+  }
+
+  delete = (req: Request, res: Response): void => {
+    deleteHandler(req, res, this.userRepository)
   }
 }

@@ -40,6 +40,6 @@ export class Song extends BaseEntity {
   @ManyToOne(() => UserEntity, ({ id, username }) => ({ id, username }), { onDelete: 'SET NULL' })
     updatedBy?: Relation<UserEntity>
 
-  @ManyToMany(() => Playlist, playlist => playlist.songlist, { onDelete: 'SET NULL' })
+  @ManyToMany(() => Playlist, playlist => playlist.songlist, { onDelete: 'CASCADE' })
     usedInPlaylists: Relation<Playlist[]>
 }

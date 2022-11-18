@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from 'express'
 import jwt, { JwtPayload } from 'jsonwebtoken'
-import { UserEntity } from 'src/database/entities'
+
+import { UserEntity } from '../database/entities'
+import { UserRepository } from '../database/repositories'
 
 export const credentialVerification = (req: Request, res: Response, next: NextFunction): void => {
   const token = req.headers.authorization?.split(' ')[1]
@@ -22,18 +24,21 @@ export const credentialVerification = (req: Request, res: Response, next: NextFu
         } else {
           res.locals.jwt = decoded
 
-          if (!req.session.user) {
-            const { username, id } = decoded as JwtPayload
-
-            const user = {
-              username,
-              id
+          UserRepository.findOne({
+            where: {
+              id: (decoded as JwtPayload).id
             }
+          })
+            .then((user) => {
+              if (!req.session.user) {
+                req.session.user = user as UserEntity
+              }
 
-            req.session.user = user as UserEntity
-          }
-
-          next()
+              next()
+            })
+            .catch((error) => {
+              console.log('dbError: ', error)
+            })
         }
       })
     } else {

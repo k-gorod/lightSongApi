@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node-dev src/server.ts",
+    "start": "ts-node-dev  src/server.ts",
     "fix": "eslint --fix src/*",
     "typeorm": "typeorm-ts-node-esm",
     "migration:generate": "rm -rf src/database/migrations/* && yarn typeorm migration:generate src/database/migrations/generated-migration -d src/database/index.ts",

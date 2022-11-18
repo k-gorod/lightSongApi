@@ -16,17 +16,17 @@
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "strictPropertyInitialization": false,
-        "baseUrl": ".",
+        "baseUrl": "./",
         "paths": { // beacuse baseUrl: "src" working incorrect.
-            "@database": ["src/database"],
-            "@types": ["src/types"],
-            "@controllers": ["src/controllers"],
-            "@middleware": ["src/middleware"],
-            "@routes": ["src/routes"],
-            "@utils": ["src/utils"],
+            // "@database": ["src/database"],
+            "@types": ["src/types"]
+            // "@controllers": ["src/controllers"],
+            // "@middleware": ["src/middleware"],
+            // "@routes": ["src/routes"],
+            // "@utils": ["src/utils"],
         }
     },
     "include": [
-        "src"
+        "src/*"
     ]
 }

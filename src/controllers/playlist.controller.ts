@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from 'express'
 import { Repository } from 'typeorm'
 
 import { Song, UserEntity, Playlist } from '../database/entities'
-import { extractExistingSongs, extractReqiredSongs, getSongListIds } from '../utils'
+import { deleteHandler, extractExistingSongs, extractReqiredSongs, getSongListIds } from '../utils'
 // import { getMinskTime } from '../utils'
 
 export class PlaylistController implements IPlaylistController {
@@ -141,8 +141,6 @@ export class PlaylistController implements IPlaylistController {
               const songsToAdd = extractReqiredSongs(songlist, playlist.songlist)
               const existingSongs = extractExistingSongs(songlist, playlist.songlist) // left only existing in database songs
 
-              console.log(songsToAdd)
-
               const updatePlaylist = (newSongs: Song[] = []): void => {
                 playlist.name = name ?? playlist.name
                 playlist.isPrivat = isPrivat ?? playlist.isPrivat
@@ -202,26 +200,6 @@ export class PlaylistController implements IPlaylistController {
   }
 
   delete = (req: Request, res: Response, next: NextFunction): void => {
-    if (!req.query || !req.query.id) {
-      res.status(400).json({
-        message: 'Provide id after ? sign'
-      })
-      return
-    }
-
-    const { id } = req.query
-
-    this.playlistRepository
-      .delete(Number(id))
-      .then(() => {
-        res.status(200).json({
-          message: 'Deleted'
-        })
-      })
-      .catch(() => {
-        res.status(404).json({
-          message: 'Unable to deleted'
-        })
-      })
+    deleteHandler(req, res, this.playlistRepository)
   }
 }

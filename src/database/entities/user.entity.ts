@@ -35,11 +35,11 @@ export class UserEntity extends BaseEntity {
   @OneToMany(() => Song, song => song.createdBy, { onDelete: 'SET NULL' })
     songsAdded: Relation<Song[]>
 
-  @OneToMany(() => Playlist, playlist => playlist.createdBy)
+  @OneToMany(() => Playlist, playlist => playlist.createdBy, { onDelete: 'CASCADE' })
   @JoinTable()
     createdPlaylists: Relation<Playlist[]>
 
-  @ManyToMany(() => Playlist, playlist => playlist.likedBy)
+  @ManyToMany(() => Playlist, playlist => playlist.likedBy, { onDelete: 'SET NULL' })
   @JoinTable()
     likedPlaylists: Relation<Playlist[]>
 }
