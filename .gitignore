@@ -6,6 +6,8 @@ node_modules
 build/*
 !build/index.html
 
+src/database/migrations/*
+
 configExample.json
 
 **/migrations/*
