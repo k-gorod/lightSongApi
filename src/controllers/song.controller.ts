@@ -3,7 +3,7 @@ import { Repository } from 'typeorm'
 
 import { Song, UserEntity } from '../database/entities'
 import { ISongController } from '../types'
-import { deleteHandler, getMinskTime, handleExclusion } from '../utils'
+import { deleteHandler, handleExclusion } from '../utils'
 
 export class SongController implements ISongController {
   constructor (
@@ -18,7 +18,7 @@ export class SongController implements ISongController {
   private readonly userRepository: Repository<UserEntity>
 
   create = (req: Request, res: Response, next: NextFunction): void => {
-    const { title, lyrics, chords, description } = req.body
+    const { title, lyrics, chords, description, songAuthor } = req.body
 
     const song = new Song()
 
@@ -38,11 +38,10 @@ export class SongController implements ISongController {
         song.createdBy = user
 
         song.title = title
+        song.songAuthor = songAuthor
         song.lyrics = lyrics
         song.chords = chords
         song.description = description
-        song.createdAt = getMinskTime()
-        song.updatedAt = getMinskTime()
 
         this.songRepository.save(song)
           .then(() =>
@@ -101,7 +100,7 @@ export class SongController implements ISongController {
   }
 
   get = (req: Request, res: Response, next: NextFunction): void => {
-    if (!req.query || !req.query.id) {
+    if (!req?.query?.id) {
       handleExclusion(res)({
         status: 400,
         message: 'Provid correct id after ? sign'

@@ -85,7 +85,7 @@ export class SongCommentController implements ISongCommentController {
   }
 
   get = (req: Request, res: Response, next: NextFunction): void => {
-    if (!req.query || !req.query.id) {
+    if (!req?.query?.id) {
       handleExclusion(res)({
         status: 401,
         message: 'Provide array of IDs'
@@ -127,7 +127,7 @@ export class SongCommentController implements ISongCommentController {
   }
 
   update = (req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction): void => {
-    if (!req.body || !req.body.id) {
+    if (!req?.body?.id) {
       res.status(400).json({
         message: 'Provide array of IDs'
       })

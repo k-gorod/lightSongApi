@@ -59,7 +59,7 @@ export const handleExclusion = (
 }
 
 export const deleteHandler = (req: Request, res: Response, repository: Repository<Entities>): void => {
-  if (!req.body || !req.body.targetItems) {
+  if (!req?.body?.targetItems) {
     res.status(400).json({
       message: 'Provide array of IDs'
     })

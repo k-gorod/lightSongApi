@@ -196,7 +196,7 @@ export class UserController implements IUserController {
   }
 
   get = (req: Request, res: Response): void => {
-    if (!req.query || !req.query.id) {
+    if (!req?.query?.id) {
       handleExclusion(res)({
         status: 400,
         message: 'Provide id after ? sign'
