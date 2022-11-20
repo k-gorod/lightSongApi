@@ -1,26 +1,29 @@
 import { NextFunction, Request, Response } from 'express'
 
-type controllerMethodType = (req: Request, res: Response, next: NextFunction) => void
-
-interface abstractController {
-  create?: controllerMethodType
-  get?: controllerMethodType
-  getAll?: controllerMethodType
-  update?: controllerMethodType
-  delete?: controllerMethodType
+export interface IUserController {
+  validateToken: (req: Request, res: Response, next: NextFunction) => void
+  register: (req: Request, res: Response, next: NextFunction) => void
+  login: (req: Request, res: Response, next: NextFunction) => void
+  logout: (req: Request, res: Response, next: NextFunction) => void
+  getAllUsers: (req: Request, res: Response, next: NextFunction) => void
+  get: (req: Request, res: Response, next: NextFunction) => void
 }
 
-export interface IUserController extends abstractController {
-  validateToken: controllerMethodType
-  register: controllerMethodType
-  login: controllerMethodType
-  logout: controllerMethodType
+export interface ISongController {
+  create: (req: Request, res: Response, next: NextFunction) => void
+  getAllSongs: (req: Request, res: Response, next: NextFunction) => void
+  get: (req: Request, res: Response, next: NextFunction) => void
 }
 
-export interface ISongController extends abstractController {}
-
-export interface ISongCommentController extends abstractController {
-  add: controllerMethodType
+export interface ISongCommentController {
+  getAllComments: (req: Request, res: Response, next: NextFunction) => void
+  addSongComment: (req: Request, res: Response, next: NextFunction) => void
 }
 
-export interface IPlaylistController extends abstractController {}
+export interface IPlaylistController {
+  create: (req: Request, res: Response, next: NextFunction) => void
+  get: (req: Request, res: Response, next: NextFunction) => void
+  getAll: (req: Request, res: Response, next: NextFunction) => void
+  update: (req: Request, res: Response, next: NextFunction) => void
+  delete: (req: Request, res: Response, next: NextFunction) => void
+}

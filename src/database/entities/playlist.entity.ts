@@ -27,13 +27,13 @@ export class Playlist extends BaseEntity {
   @Column({ nullable: true })
     description?: string
 
-  @ManyToOne(() => UserEntity, user => user.createdPlaylists, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => UserEntity, user => user.createdPlaylists, { nullable: false })
     createdBy?: Relation<UserEntity>
 
-  @ManyToMany(() => UserEntity, user => user.likedPlaylists, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToMany(() => UserEntity, user => user.likedPlaylists, { nullable: true })
     likedBy?: Relation<UserEntity[]>
 
-  @ManyToMany(() => Song, song => song.usedInPlaylists, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToMany(() => Song, song => song.usedInPlaylists, { nullable: true })
   @JoinTable()
     songlist: Relation<Song[]>
 }

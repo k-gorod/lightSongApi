@@ -1,11 +1,9 @@
 import { ISongCommentController } from '@types'
 import { NextFunction, Request, Response } from 'express'
-import { ParamsDictionary } from 'express-serve-static-core'
-import { ParsedQs } from 'qs'
 import { Repository } from 'typeorm'
 
 import { SongComment, Song, UserEntity } from '../database/entities'
-import { deleteHandler, getMinskTime, handleExclusion } from '../utils'
+import { getMinskTime } from '../utils'
 
 export class SongCommentController implements ISongCommentController {
   constructor (
@@ -22,7 +20,10 @@ export class SongCommentController implements ISongCommentController {
   private readonly songRepository: Repository<Song>
   private readonly songCommentRepository: Repository<SongComment>
 
-  add = (req: Request, res: Response, next: NextFunction): void => {
+  /**
+   * Here is async - await implementation example
+   */
+  addSongComment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { songId, text } = req.body
     if (!req.session.user) {
       res.status(401).json({
@@ -38,84 +39,47 @@ export class SongCommentController implements ISongCommentController {
       return
     }
 
-    this.songRepository.findOne({
+    const [targetSong] = await this.songRepository.find({
       where: {
         id: Number(songId)
       }
-    }).then((targetSong) => {
-      if (!targetSong) {
-        res.status(502).json({ message: 'Could not find song' })
-        return
-      }
+    })
 
-      if (req.session.user) {
-        this.userRepository.findOne({
-          where: {
-            id: req.session.user.id
-          }
-        })
-          .then((currentUser) => {
-            if (!currentUser) {
-              res.status(502).json({ message: 'Could not find song' })
-              return
-            }
-
-            const comment = new SongComment()
-
-            comment.author = currentUser
-            comment.song = targetSong
-            comment.text = text
-            comment.createdAt = getMinskTime()
-
-            this.songCommentRepository.save(comment)
-              .then(() => {
-                res.status(201).json({
-                  message: 'SongComment posted'
-                })
-              })
-              .catch(() => {
-                res.status(502).json({ message: 'SongComment not being posted' })
-              })
-          })
-          .catch(() => {})
-      } else {
-        // login please
-      }
-    }).catch(() => {})
-  }
-
-  get = (req: Request, res: Response, next: NextFunction): void => {
-    if (!req.query || !req.query.id) {
-      handleExclusion(res)({
-        status: 401,
-        message: 'Provide array of IDs'
-      })
+    if (!targetSong) {
+      res.status(502).json({ message: 'Could not find song' })
       return
     }
 
-    const { id } = req.query
-
-    this.songCommentRepository.findOne({
+    const [currentUser] = await this.userRepository.find({
       where: {
-        id: Number(id)
+        id: req.session.user.id
       }
     })
-      .then((fetchResponse) => {
-        if (!fetchResponse) {
-          handleExclusion(res)({
-            status: 404,
-            message: 'Could not find comment'
-          })
-        }
 
-        res.status(200).json(fetchResponse)
+    if (!currentUser) {
+      res.status(502).json({ message: 'Could not find song' })
+      return
+    }
+
+    const comment = new SongComment()
+
+    comment.author = currentUser
+    comment.song = targetSong
+    comment.text = text
+    comment.createdAt = getMinskTime()
+
+    const addCommentResponse = await this.songCommentRepository.save(comment)
+
+    if (addCommentResponse) {
+      res.status(201).json({
+        message: 'SongComment posted'
       })
-      .catch((error) => {
-        console.log(error)
-      })
+    } else {
+      res.status(502).json({ message: 'SongComment not being posted' })
+    }
   }
 
-  getAll = (req: Request, res: Response, next: NextFunction): void => {
+  getAllComments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     this.songCommentRepository.find({
       relations: ['author', 'song']
     })
@@ -124,60 +88,5 @@ export class SongCommentController implements ISongCommentController {
       }).catch((error) => {
         res.status(401).json(error)
       })
-  }
-
-  update = (req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction): void => {
-    if (!req.body || !req.body.id) {
-      res.status(400).json({
-        message: 'Provide array of IDs'
-      })
-      return
-    }
-
-    const { id, text, commentReplyId } = req.body
-
-    this.songCommentRepository.findOne({
-      where: {
-        id: Number(id)
-      }
-    })
-      .then((comment) => {
-        if (!comment) {
-          handleExclusion(res)({
-            status: 404,
-            message: 'Wrong id provided'
-          })
-          return
-        }
-
-        comment.text = text ?? comment.text
-        comment.commentReplyId = commentReplyId ?? comment.commentReplyId
-
-        this.songCommentRepository.save(comment)
-          .then((fetchResponse) => {
-            res.status(200).json({
-              message: 'Comment updated',
-              data: fetchResponse
-            })
-          })
-          .catch((error) => {
-            handleExclusion(res)({
-              status: 401,
-              message: 'Could not update comment',
-              error
-            })
-          })
-      })
-      .catch((error) => {
-        handleExclusion(res)({
-          status: 404,
-          message: 'Could not find song',
-          error
-        })
-      })
-  }
-
-  delete = (req: Request, res: Response, next: NextFunction): void => {
-    deleteHandler(req, res, this.songCommentRepository)
   }
 }
