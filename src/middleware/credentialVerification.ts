@@ -4,6 +4,11 @@ import jwt, { JwtPayload } from 'jsonwebtoken'
 import { UserEntity } from '../database/entities'
 import { UserRepository } from '../database/repositories'
 
+/**
+ * 
+ * Write handleExlusion
+ */
+
 export const credentialVerification = (req: Request, res: Response, next: NextFunction): void => {
   const token = req.headers.authorization?.split(' ')[1]
   const secret = process.env.TOKEN_SECRET

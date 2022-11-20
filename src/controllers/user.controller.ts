@@ -231,10 +231,11 @@ export class UserController implements IUserController {
       .then(([user]) => {
         if (!user) {
           handleExclusion(res)({
-            status: 404,
+            status: 400,
             message: 'Could not find user'
           })
         }
+
         res.status(200).json(user)
       }
       ).catch((error) =>

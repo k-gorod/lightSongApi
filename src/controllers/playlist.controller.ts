@@ -24,59 +24,60 @@ export class PlaylistController implements IPlaylistController {
   create = (req: Request, res: Response, next: NextFunction): void => {
     const { name, isPrivat, tags, description, songs } = req.body
 
-    if (req.session.user) {
-      this.userRepository.find({
-        where: {
-          id: req.session.user.id
-        }
-      })
-        .then(([createdBy]) => {
-          this.songRepository.find({
-            where: getSongListIds(songs)
-          })
-            .then(songlist => {
-              this.playlistRepository.save({
-                name,
-                isPrivat,
-                tags,
-                description,
-                songlist,
-                createdBy
-              })
-                .then((playlist) =>
-                  res.status(201).json({
-                    message: 'Playlist created',
-                    data: playlist
-                  })
-                )
-                .catch((error) => {
-                  handleExclusion(res)({
-                    status: 400,
-                    message: 'Could not create playlist',
-                    error
-                  })
-                })
-            }).catch((error) => {
-              handleExclusion(res)({
-                status: 500,
-                message: 'DB failure while getting songs',
-                error
-              })
-            })
-        })
-        .catch((error) => {
-          handleExclusion(res)({
-            status: 401,
-            message: 'Could not find user. Login please',
-            error
-          })
-        })
-    } else {
+    if (!req.session.user) {
       handleExclusion(res)({
         status: 501,
         message: 'Login please'
       })
+
+      return
     }
+    this.userRepository.find({
+      where: {
+        id: req.session.user.id
+      }
+    })
+      .then(([createdBy]) => {
+        this.songRepository.find({
+          where: getSongListIds(songs)
+        })
+          .then(songlist => {
+            this.playlistRepository.save({
+              name,
+              isPrivat,
+              tags,
+              description,
+              songlist,
+              createdBy
+            })
+              .then((playlist) =>
+                res.status(201).json({
+                  message: 'Playlist created',
+                  data: playlist
+                })
+              )
+              .catch((error) => {
+                handleExclusion(res)({
+                  status: 400,
+                  message: 'Could not create playlist',
+                  error
+                })
+              })
+          }).catch((error) => {
+            handleExclusion(res)({
+              status: 500,
+              message: 'DB failure while getting songs',
+              error
+            })
+          })
+      })
+      .catch((error) => {
+        handleExclusion(res)({
+          status: 401,
+          message: 'Could not find user. Login please',
+          error
+        })
+      })
   }
 
   get = (req: Request, res: Response, next: NextFunction): void => {
