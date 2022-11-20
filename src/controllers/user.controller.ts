@@ -63,11 +63,17 @@ export class UserController implements IUserController {
       },
       relations: { songsAdded: true }
     })
-      .then((users) =>
-        res.status(200)
-          .json({
-            data: users
+      .then((users) => {
+        if (users.length < 1) {
+          handleExclusion(res)({
+            status: 404,
+            message: 'There is no users'
           })
+          return
+        }
+
+        res.status(200).json(users)
+      }
       ).catch((error) => {
         handleExclusion(res)({
           status: 401,
