@@ -24,15 +24,18 @@ export class SongCommentController implements ISongCommentController {
 
   add = (req: Request, res: Response, next: NextFunction): void => {
     const { songId, text } = req.body
+
     if (!req.session.user) {
-      res.status(401).json({
+      handleExclusion(res)({
+        status: 401,
         message: '401: Unauthorized'
       })
       return
     }
 
     if (!songId || !text) {
-      res.status(400).json({
+      handleExclusion(res)({
+        status: 400,
         message: '400: Invalid data provided'
       })
       return
@@ -44,7 +47,10 @@ export class SongCommentController implements ISongCommentController {
       }
     }).then((targetSong) => {
       if (!targetSong) {
-        res.status(502).json({ message: 'Could not find song' })
+        handleExclusion(res)({
+          status: 404,
+          message: 'Could not find song'
+        })
         return
       }
 
@@ -56,7 +62,10 @@ export class SongCommentController implements ISongCommentController {
         })
           .then((currentUser) => {
             if (!currentUser) {
-              res.status(502).json({ message: 'Could not find song' })
+              handleExclusion(res)({
+                status: 404,
+                message: 'Could not find user'
+              })
               return
             }
 
@@ -68,16 +77,27 @@ export class SongCommentController implements ISongCommentController {
             comment.createdAt = getMinskTime()
 
             this.songCommentRepository.save(comment)
-              .then(() => {
+              .then((comment) => {
                 res.status(201).json({
-                  message: 'SongComment posted'
+                  message: 'SongComment posted',
+                  data: comment
                 })
               })
-              .catch(() => {
-                res.status(502).json({ message: 'SongComment not being posted' })
+              .catch((error) => {
+                handleExclusion(res)({
+                  status: 500,
+                  message: 'SongComment not being posted',
+                  error
+                })
               })
           })
-          .catch(() => {})
+          .catch((error) => {
+            handleExclusion(res)({
+              status: 500,
+              message: 'Could not find target user',
+              error
+            })
+          })
       } else {
         // login please
       }
@@ -111,7 +131,11 @@ export class SongCommentController implements ISongCommentController {
         res.status(200).json(fetchResponse)
       })
       .catch((error) => {
-        console.log(error)
+        handleExclusion(res)({
+          status: 500,
+          message: 'Could not find comment',
+          error
+        })
       })
   }
 
@@ -120,15 +144,28 @@ export class SongCommentController implements ISongCommentController {
       relations: ['author', 'song']
     })
       .then((data) => {
+        if (data.length < 1) {
+          handleExclusion(res)({
+            status: 404,
+            message: 'There is no comments'
+          })
+          return
+        }
+
         res.status(200).json(data)
       }).catch((error) => {
-        res.status(401).json(error)
+        handleExclusion(res)({
+          status: 500,
+          message: 'Could not find comments',
+          error
+        })
       })
   }
 
   update = (req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction): void => {
     if (!req?.body?.id) {
-      res.status(400).json({
+      handleExclusion(res)({
+        status: 400,
         message: 'Provide array of IDs'
       })
       return

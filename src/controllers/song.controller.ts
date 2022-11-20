@@ -22,7 +22,7 @@ export class SongController implements ISongController {
 
     const song = new Song()
 
-    if (!req.session.user) {
+    if (!req.session.user?.id) {
       handleExclusion(res)({
         status: 401,
         message: '401: Unauthorized'
@@ -44,9 +44,10 @@ export class SongController implements ISongController {
         song.description = description
 
         this.songRepository.save(song)
-          .then(() =>
+          .then((song) =>
             res.status(201).json({
-              message: 'Song being added'
+              message: 'Song being added',
+              data: song
             })
           ).catch((error) =>
             handleExclusion(res)({

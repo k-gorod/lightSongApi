@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from 'express'
 import { Repository } from 'typeorm'
 
 import { Song, UserEntity, Playlist } from '../database/entities'
-import { deleteHandler, extractExistingSongs, extractReqiredSongs, getSongListIds } from '../utils'
+import { deleteHandler, extractExistingSongs, extractReqiredSongs, getSongListIds, handleExclusion } from '../utils'
 // import { getMinskTime } from '../utils'
 
 export class PlaylistController implements IPlaylistController {
@@ -43,63 +43,72 @@ export class PlaylistController implements IPlaylistController {
                 songlist,
                 createdBy
               })
-                .then((dbAnswer) =>
+                .then((playlist) =>
                   res.status(201).json({
-                    message: 'Playlist created'
+                    message: 'Playlist created',
+                    data: playlist
                   })
                 )
-                .catch((err) => {
-                  res.status(400).json({
+                .catch((error) => {
+                  handleExclusion(res)({
+                    status: 400,
                     message: 'Could not create playlist',
-                    err
+                    error
                   })
                 })
-            }).catch((err) => {
-              res.status(500).json({
+            }).catch((error) => {
+              handleExclusion(res)({
+                status: 500,
                 message: 'DB failure while getting songs',
-                err
+                error
               })
             })
         })
-        .catch((err) => {
-          res.status(401).json({
-            message: 'Could not find user. Update session',
-            err
+        .catch((error) => {
+          handleExclusion(res)({
+            status: 401,
+            message: 'Could not find user. Login please',
+            error
           })
         })
     } else {
-      res.status(501).json({
-        message: 'Login please. Session storing not implemented'
+      handleExclusion(res)({
+        status: 501,
+        message: 'Login please'
       })
     }
   }
 
   get = (req: Request, res: Response, next: NextFunction): void => {
     if (!req.query.id) {
-      res.status(400).json({
+      handleExclusion(res)({
+        status: 400,
         message: 'Provide id after ? sign'
       })
+      return
     }
-    this.playlistRepository.find({
+
+    this.playlistRepository.findOne({
       where: {
         id: Number(req.query.id)
       }
     })
       .then((foundPlaylists) => {
-        if (foundPlaylists.length === 1) {
-          res.status(200).json({
-            playlist: foundPlaylists[0]
-          })
-        } else {
-          res.status(404).json({
+        if (!foundPlaylists) {
+          handleExclusion(res)({
+            status: 404,
             message: 'Could not find appropriate playlist. Check provided data'
           })
+          return
         }
+
+        res.status(200).json(foundPlaylists)
       })
-      .catch((err) => {
-        res.status(500).json({
+      .catch((error) => {
+        handleExclusion(res)({
+          status: 500,
           message: 'Unable to get Playlist',
-          err
+          error
         })
       })
   }
@@ -109,14 +118,22 @@ export class PlaylistController implements IPlaylistController {
       relations: ['createdBy', 'songlist', 'likedBy']
     })
       .then((playlists) => {
+        if (playlists.length < 1) {
+          handleExclusion(res)({
+            status: 404,
+            message: 'There is no playlists'
+          })
+        }
+
         res.status(200).json({
           playlists
         })
       })
-      .catch((err) => {
-        res.status(500).json({
+      .catch((error) => {
+        handleExclusion(res)({
+          status: 500,
           message: 'Unable to get Playlists',
-          err
+          error
         })
       })
   }
@@ -131,68 +148,81 @@ export class PlaylistController implements IPlaylistController {
       relations: ['likedBy', 'songlist']
     })
       .then((playlist) => {
-        if (playlist != null) {
-          this.userRepository.findOne({
-            where: {
-              id: likedBy ? Number(likedBy.id) : 0
-            }
-          })
-            .then((user) => {
-              const songsToAdd = extractReqiredSongs(songlist, playlist.songlist)
-              const existingSongs = extractExistingSongs(songlist, playlist.songlist) // left only existing in database songs
-
-              const updatePlaylist = (newSongs: Song[] = []): void => {
-                playlist.name = name ?? playlist.name
-                playlist.isPrivat = isPrivat ?? playlist.isPrivat
-                playlist.tags = tags ?? playlist.tags
-                playlist.description = description ?? playlist.description
-                playlist.songlist = [...existingSongs, ...newSongs]
-                playlist.likedBy = user ? [...playlist.likedBy!, user] : playlist.likedBy
-
-                this.playlistRepository.save(playlist)
-                  .then(() => {
-                    res.status(200).json({
-                      message: 'Playlist Updated'
-                    })
-                  })
-                  .catch((error) => {
-                    res.status(400).json({
-                      message: 'Playlist update failure',
-                      error
-                    })
-                  })
-              }
-
-              if (songsToAdd.length === 0) {
-                updatePlaylist()
-              } else {
-                this.songRepository.find({
-                  where: songsToAdd
-                })
-                  .then((newSongs) => {
-                    updatePlaylist(newSongs)
-                  })
-                  .catch((error) => {
-                    res.status(500).json({
-                      message: 'Could not get songs',
-                      error
-                    })
-                  })
-              }
-            })
-            .catch(() => {
-              res.status(400).json({
-                message: 'User serach error'
-              })
-            })
-        } else {
-          res.status(400).json({
+        if (!playlist) {
+          handleExclusion(res)({
+            status: 400,
             message: 'Invalid playlist ID'
           })
+
+          return
         }
+        this.userRepository.findOne({
+          where: {
+            id: likedBy ? Number(likedBy.id) : 0
+          }
+        })
+          .then((user) => {
+            const songsToAdd = extractReqiredSongs(songlist, playlist.songlist)
+            const existingSongs = extractExistingSongs(songlist, playlist.songlist) // left only existing in database songs
+
+            const updatePlaylist = (newSongs: Song[] = []): void => {
+              playlist.name = name ?? playlist.name
+              playlist.isPrivat = isPrivat ?? playlist.isPrivat
+              playlist.tags = tags ?? playlist.tags
+              playlist.description = description ?? playlist.description
+              playlist.songlist = [...existingSongs, ...newSongs]
+              playlist.likedBy = user ? [...playlist.likedBy!, user] : playlist.likedBy
+
+              this.playlistRepository.save(playlist)
+                .then(() => {
+                  res.status(200).json({
+                    message: 'Playlist Updated'
+                  })
+                })
+                .catch((error) => {
+                  handleExclusion(res)({
+                    status: 500,
+                    message: 'Playlist update failure',
+                    error
+                  })
+                })
+            }
+
+            if (songsToAdd.length === 0) {
+              updatePlaylist()
+            } else {
+              this.songRepository.find({
+                where: songsToAdd
+              })
+                .then((newSongs) => {
+                  if (newSongs.length < 1) {
+                    handleExclusion(res)({
+                      status: 404,
+                      message: 'Could not find any appropriate song'
+                    })
+                  }
+                  updatePlaylist(newSongs)
+                })
+                .catch((error) => {
+                  handleExclusion(res)({
+                    status: 500,
+                    message: 'Could not get songs',
+                    error
+                  })
+                })
+            }
+          })
+          .catch((error) => {
+            handleExclusion(res)({
+              status: 400,
+              message: 'User serach error',
+              error
+            })
+          })
       })
       .catch((error) => {
-        res.status(400).json({
+        handleExclusion(res)({
+          status: 400,
           message: 'Could not find Playlist',
           error
         })

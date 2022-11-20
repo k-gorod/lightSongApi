@@ -37,9 +37,10 @@ export class UserController implements IUserController {
       user.role = 'user'
 
       this.userRepository.save(user)
-        .then(() =>
+        .then((user) =>
           res.status(201).json({
-            message: 'UserEntity successfully registered'
+            message: 'UserEntity successfully registered',
+            data: user
           })
         ).catch((error) =>
           handleExclusion(res)({
