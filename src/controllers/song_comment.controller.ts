@@ -54,53 +54,57 @@ export class SongCommentController implements ISongCommentController {
         return
       }
 
-      if (req.session.user) {
-        this.userRepository.findOne({
-          where: {
-            id: req.session.user.id
-          }
+      if (!req.session.user) {
+        handleExclusion(res)({
+          status: 404,
+          message: 'Sign in please'
         })
-          .then((currentUser) => {
-            if (!currentUser) {
-              handleExclusion(res)({
-                status: 404,
-                message: 'Could not find user'
-              })
-              return
-            }
-
-            const comment = new SongComment()
-
-            comment.author = currentUser
-            comment.song = targetSong
-            comment.text = text
-            comment.createdAt = getMinskTime()
-
-            this.songCommentRepository.save(comment)
-              .then((comment) => {
-                res.status(201).json({
-                  message: 'SongComment posted',
-                  data: comment
-                })
-              })
-              .catch((error) => {
-                handleExclusion(res)({
-                  status: 500,
-                  message: 'SongComment not being posted',
-                  error
-                })
-              })
-          })
-          .catch((error) => {
-            handleExclusion(res)({
-              status: 500,
-              message: 'Could not find target user',
-              error
-            })
-          })
-      } else {
-        // login please
+        return
       }
+
+      this.userRepository.findOne({
+        where: {
+          id: req.session.user.id
+        }
+      })
+        .then((currentUser) => {
+          if (!currentUser) {
+            handleExclusion(res)({
+              status: 404,
+              message: 'Could not find user'
+            })
+            return
+          }
+
+          const comment = new SongComment()
+
+          comment.author = currentUser
+          comment.song = targetSong
+          comment.text = text
+          comment.createdAt = getMinskTime()
+
+          this.songCommentRepository.save(comment)
+            .then((comment) => {
+              res.status(201).json({
+                message: 'SongComment posted',
+                data: comment
+              })
+            })
+            .catch((error) => {
+              handleExclusion(res)({
+                status: 500,
+                message: 'SongComment not being posted',
+                error
+              })
+            })
+        })
+        .catch((error) => {
+          handleExclusion(res)({
+            status: 500,
+            message: 'Could not find target user',
+            error
+          })
+        })
     }).catch(() => {})
   }
 
