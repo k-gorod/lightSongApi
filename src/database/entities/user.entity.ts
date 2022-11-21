@@ -12,10 +12,13 @@ export class UserEntity extends BaseEntity {
     id: number
 
   @Column({ unique: true, nullable: false })
-    username: string
+    login: string
 
   @Column({ select: false, nullable: false })
     password: string
+
+  @Column({ nullable: true })
+    username: string
 
   @Column({ nullable: false })
     role?: string

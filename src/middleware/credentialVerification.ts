@@ -1,11 +1,12 @@
 import { NextFunction, Request, Response } from 'express'
 import jwt, { JwtPayload } from 'jsonwebtoken'
+import { handleExclusion } from '../utils'
 
 import { UserEntity } from '../database/entities'
 import { UserRepository } from '../database/repositories'
 
 /**
- * 
+ * TODO
  * Write handleExlusion
  */
 
@@ -24,7 +25,7 @@ export const credentialVerification = (req: Request, res: Response, next: NextFu
           })
         } else if (!(decoded as JwtPayload).expiresIn || (typeof decoded !== 'string' && Date.now() > decoded.expiresIn!)) {
           return res.status(404).json({
-            message: 'No token or expired. Login please'
+            message: 'No token or expired. Sign in please'
           })
         } else {
           res.locals.jwt = decoded
@@ -35,6 +36,15 @@ export const credentialVerification = (req: Request, res: Response, next: NextFu
             }
           })
             .then((user) => {
+
+              if (!user) {
+                handleExclusion(res)({
+                  status: 401,
+                  message: "401: Wrong user credentials. Sign in please"
+                })
+
+                return
+              }
               if (!req.session.user) {
                 req.session.user = user as UserEntity
               }

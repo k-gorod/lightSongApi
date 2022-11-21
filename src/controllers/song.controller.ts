@@ -77,7 +77,7 @@ export class SongController implements ISongController {
         createdAt: true,
         createdBy: {
           id: true,
-          username: true
+          login: true
         },
         comments: true
       },
@@ -121,7 +121,7 @@ export class SongController implements ISongController {
         description: true,
         createdBy: {
           id: true,
-          username: true
+          login: true
         },
         comments: {
           id: true,
@@ -129,7 +129,7 @@ export class SongController implements ISongController {
           createdAt: true,
           author: {
             id: true,
-            username: true
+            login: true
           },
           commentReplyId: true
         }

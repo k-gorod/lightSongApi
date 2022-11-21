@@ -21,7 +21,7 @@ export const signJWT: signJWTFunction = (user, callback) => {
   try {
     jwt.sign(
       {
-        username: user.username,
+        login: user.login,
         id: user.id,
         expiresIn
       },

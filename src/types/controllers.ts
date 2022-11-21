@@ -13,8 +13,8 @@ interface abstractController {
 export interface IUserController extends abstractController {
   validateToken: controllerMethodType
   register: controllerMethodType
-  login: controllerMethodType
-  logout: controllerMethodType
+  signIn: controllerMethodType
+  signOut: controllerMethodType
 }
 
 export interface ISongController extends abstractController {}

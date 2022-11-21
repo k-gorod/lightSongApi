@@ -21,7 +21,8 @@ export class UserController implements IUserController {
   }
 
   register = (req: Request, res: Response): void => {
-    const { username, password } = req.body
+    const { login, password } = req.body
+
     bcryptjs.hash(password, 12, (error, hash) => {
       if (error) {
         handleExclusion(res)({
@@ -32,7 +33,7 @@ export class UserController implements IUserController {
       }
 
       const user = new UserEntity()
-      user.username = username
+      user.login = login
       user.password = hash
       user.role = 'user'
 
@@ -42,7 +43,8 @@ export class UserController implements IUserController {
             message: 'UserEntity successfully registered',
             data: user
           })
-        ).catch((error) =>
+        )
+        .catch((error) =>
           handleExclusion(res)({
             status: 401,
             message: 'Registration failed',
@@ -56,7 +58,7 @@ export class UserController implements IUserController {
     this.userRepository.find({
       select: {
         id: true,
-        username: true,
+        login: true,
         songsAdded: {
           id: true,
           title: true
@@ -84,7 +86,7 @@ export class UserController implements IUserController {
       })
   }
 
-  logout = (req: Request, res: Response): void => {
+  signOut = (req: Request, res: Response): void => {
     delete res.locals.jwt
     delete req.session.user
 
@@ -95,14 +97,14 @@ export class UserController implements IUserController {
     })
   }
 
-  login = (req: Request, res: Response): void => {
-    const { username, password } = req.body
+  signIn = (req: Request, res: Response): void => {
+    const { login, password } = req.body
 
     this.userRepository.find({
-      where: { username },
+      where: { login },
       select: {
         id: true,
-        username: true,
+        login: true,
         password: true,
         createdAt: true,
         lastSingIn: true,
@@ -117,7 +119,7 @@ export class UserController implements IUserController {
         if (users.length !== 1) {
           handleExclusion(res)({
             status: 401,
-            message: 'Wrong username'
+            message: 'Wrong login'
           })
           return
         }
@@ -130,7 +132,7 @@ export class UserController implements IUserController {
          */
         // if (req.session.user && user.id === req.session.user.id) {
         //   return res.status(200).json({
-        //     message: 'Username already logged in',
+        //     message: 'login already logged in',
         //     auth: {
         //       dbtoken,
         //       req.session.user.expiresIn
@@ -216,7 +218,7 @@ export class UserController implements IUserController {
     this.userRepository.find({
       select: {
         id: true,
-        username: true,
+        login: true,
         createdAt: true,
         lastSingIn: true,
         config: {

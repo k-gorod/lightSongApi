@@ -27,7 +27,7 @@ export class PlaylistController implements IPlaylistController {
     if (!req.session.user) {
       handleExclusion(res)({
         status: 501,
-        message: 'Login please'
+        message: 'Sign in please'
       })
 
       return
@@ -74,7 +74,7 @@ export class PlaylistController implements IPlaylistController {
       .catch((error) => {
         handleExclusion(res)({
           status: 401,
-          message: 'Could not find user. Login please',
+          message: 'Could not find user. Sign in please',
           error
         })
       })
