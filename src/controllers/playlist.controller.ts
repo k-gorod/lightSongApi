@@ -175,9 +175,10 @@ export class PlaylistController implements IPlaylistController {
               playlist.likedBy = user ? [...playlist.likedBy!, user] : playlist.likedBy
 
               this.playlistRepository.save(playlist)
-                .then(() => {
+                .then((platlist) => {
                   res.status(200).json({
-                    message: 'Playlist Updated'
+                    message: 'Playlist Updated',
+                    data: playlist
                   })
                 })
                 .catch((error) => {

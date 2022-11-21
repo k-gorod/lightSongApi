@@ -98,6 +98,15 @@ export class UserController implements IUserController {
   }
 
   signIn = (req: Request, res: Response): void => {
+    if (!req?.body?.login) {
+      handleExclusion(res)({
+        status: 400,
+        message: 'Provide correct data'
+      })
+
+      return
+    }
+
     const { login, password } = req.body
 
     this.userRepository.find({

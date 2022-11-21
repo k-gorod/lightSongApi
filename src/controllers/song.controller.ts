@@ -181,9 +181,10 @@ export class SongController implements ISongController {
           song.description = description ?? song.description
 
           this.songRepository.save(song)
-            .then(() => {
+            .then((song) => {
               res.status(200).json({
-                message: 'Song Updated'
+                message: 'Song Updated',
+                data: song
               })
             })
             .catch((error) => {

@@ -126,6 +126,8 @@ export class SongCommentController implements ISongCommentController {
             status: 404,
             message: 'Could not find comment'
           })
+
+          return
         }
 
         res.status(200).json(fetchResponse)
@@ -191,10 +193,10 @@ export class SongCommentController implements ISongCommentController {
         comment.commentReplyId = commentReplyId ?? comment.commentReplyId
 
         this.songCommentRepository.save(comment)
-          .then((fetchResponse) => {
+          .then((songComment) => {
             res.status(200).json({
               message: 'Comment updated',
-              data: fetchResponse
+              data: songComment
             })
           })
           .catch((error) => {
