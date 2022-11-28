@@ -4,7 +4,6 @@ export const permissionToRepository = (role: string = 'guest') => ({
   admin = {},
   owner = {}
 }) => {
-  console.log(role)
   return {
     guest,
     member: { ...guest, ...member },

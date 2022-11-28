@@ -143,6 +143,14 @@ export class SongController implements ISongController {
       }
     })
       .then((songList) => {
+        if (songList.length < 1) {
+          handleExclusion(res)({
+            status: 404,
+            message: 'There is no songs'
+          })
+          return
+        }
+
         res.status(200).json(songList)
       }).catch((error) => {
         handleExclusion(res)({

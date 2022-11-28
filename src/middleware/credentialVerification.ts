@@ -24,7 +24,7 @@ export const credentialVerification = (req: Request, res: Response, next: NextFu
             message: 'Decoding failure'
           })
         } else if (!(decoded as JwtPayload).expiresIn || (typeof decoded !== 'string' && Date.now() > decoded.expiresIn!)) {
-          return res.status(404).json({
+          return res.status(401).json({
             message: 'No token or expired. Sign in please'
           })
         } else {

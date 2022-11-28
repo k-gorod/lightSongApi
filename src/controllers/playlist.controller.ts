@@ -232,6 +232,7 @@ export class PlaylistController implements IPlaylistController {
             status: 404,
             message: 'There is no playlists'
           })
+          return
         }
 
         res.status(200).json({
