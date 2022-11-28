@@ -31,7 +31,7 @@ export class Song extends BaseEntity {
   @UpdateDateColumn({ type: 'timestamptz' })
     updatedAt: Date
 
-  @OneToMany(() => SongComment, comment => comment.song, { onDelete: 'SET NULL' })
+  @OneToMany(() => SongComment, comment => comment.song, { onDelete: 'CASCADE' })
     comments?: Relation<SongComment[]>
 
   @ManyToOne(() => UserEntity, user => user.songsAdded, { onDelete: 'SET NULL' })

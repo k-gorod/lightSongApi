@@ -23,9 +23,17 @@ export class SongCommentController implements ISongCommentController {
   private readonly songCommentRepository: Repository<SongComment>
 
   add = (req: Request, res: Response, next: NextFunction): void => {
+    if (req.session.user?.role === 'guest') {
+      handleExclusion(res)({
+        status: 403,
+        message: 'Permission denied'
+      })
+
+      return
+    }
     const { songId, text } = req.body
 
-    if (!req.session.user) {
+    if (!req.session.user?.id) {
       handleExclusion(res)({
         status: 401,
         message: '401: Unauthorized'
@@ -54,17 +62,9 @@ export class SongCommentController implements ISongCommentController {
         return
       }
 
-      if (!req.session.user) {
-        handleExclusion(res)({
-          status: 404,
-          message: 'Sign in please'
-        })
-        return
-      }
-
       this.userRepository.findOne({
         where: {
-          id: req.session.user.id
+          id: req.session.user?.id
         }
       })
         .then((currentUser) => {
@@ -146,6 +146,15 @@ export class SongCommentController implements ISongCommentController {
   }
 
   getAll = (req: Request, res: Response, next: NextFunction): void => {
+    if (req.session.user?.role !== 'admin') {
+      handleExclusion(res)({
+        status: 403,
+        message: 'Permission denied'
+      })
+
+      return
+    }
+
     this.songCommentRepository.find({
       relations: ['author', 'song']
     })
@@ -177,18 +186,46 @@ export class SongCommentController implements ISongCommentController {
       return
     }
 
+    if (req.session.user?.role === 'guest') {
+      handleExclusion(res)({
+        status: 403,
+        message: 'Permission denied'
+      })
+      return
+    }
+
     const { id, text, commentReplyId } = req.body
 
     this.songCommentRepository.findOne({
+      select: {
+        author: {
+          id: true,
+          username: true
+        },
+        song: {
+          id: true,
+          songAuthor: true,
+          title: true
+        }
+      },
       where: {
         id: Number(id)
-      }
+      },
+      relations: ['author', 'song']
     })
       .then((comment) => {
         if (!comment) {
           handleExclusion(res)({
             status: 404,
             message: 'Wrong id provided'
+          })
+          return
+        }
+
+        if (req.session.user?.id !== comment.author?.id && req.session.user?.role !== 'admin') {
+          handleExclusion(res)({
+            status: 403,
+            message: 'Permission denied. You should be comment owner'
           })
           return
         }
@@ -221,6 +258,15 @@ export class SongCommentController implements ISongCommentController {
   }
 
   delete = (req: Request, res: Response, next: NextFunction): void => {
+    if (req.session.user?.role !== 'admin') {
+      handleExclusion(res)({
+        status: 403,
+        message: 'Permission denied'
+      })
+
+      return
+    }
+
     deleteHandler(req, res, this.songCommentRepository)
   }
 }

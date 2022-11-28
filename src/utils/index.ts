@@ -1,6 +1,7 @@
 import { Song, UserEntity } from '../database/entities'
 
 export { signJWT } from './signJWT'
+export { permissionToRepository } from './permissionToRepository'
 
 import { Entities } from '@types'
 import { Request, Response } from 'express'
@@ -11,8 +12,20 @@ export const removeUserPassword = (user: UserEntity): any => {
   return theResrOfTheData
 }
 
-export const excludeFields = (object: { [key: string]: any }, excludeList: string[]): any => {
-  return Object.entries(object).reduce((acc, [key, value]) => excludeList.some(el => el === key) ? acc : { ...acc, [key]: value }, {})
+export const excludeFields = (object: any, excludeList: any): any => {
+  return Object.entries(object).reduce((acc, [key, value]) => excludeList.some((el: any) => el === key) ? acc : { ...acc, [key]: value }, {})
+}
+
+export const postRequestSelection = (object: any, selectList: any): any => {
+  return Object.entries(selectList).reduce((acc, [key, value]) => {
+    if (value === true) {
+      return { ...acc, [key]: object[key] }
+    } else if (Array.isArray(object[key])) {
+      return value ? { ...acc, [key]: object[key].map((el: any) => postRequestSelection(el, value)) } : acc
+    } else {
+      return object[key] ? { ...acc, [key]: postRequestSelection(object[key], value) } : acc
+    }
+  }, {})
 }
 
 export const getMinskTime = (): Date => {

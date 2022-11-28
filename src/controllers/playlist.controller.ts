@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from 'express'
 import { Repository } from 'typeorm'
 
 import { Song, UserEntity, Playlist } from '../database/entities'
-import { deleteHandler, extractExistingSongs, extractReqiredSongs, getSongListIds, handleExclusion } from '../utils'
+import { deleteHandler, extractExistingSongs, extractReqiredSongs, getSongListIds, handleExclusion, postRequestSelection } from '../utils'
 // import { getMinskTime } from '../utils'
 
 export class PlaylistController implements IPlaylistController {
@@ -22,9 +22,15 @@ export class PlaylistController implements IPlaylistController {
   private readonly playlistRepository: Repository<Playlist>
 
   create = (req: Request, res: Response, next: NextFunction): void => {
-    const { name, isPrivat, tags, description, songs } = req.body
+    if (req.session.user?.role === 'guest') {
+      handleExclusion(res)({
+        status: 403,
+        message: 'Permission denied'
+      })
+      return
+    }
 
-    if (!req.session.user) {
+    if (!req.session.user?.id) {
       handleExclusion(res)({
         status: 501,
         message: 'Sign in please'
@@ -32,16 +38,44 @@ export class PlaylistController implements IPlaylistController {
 
       return
     }
-    this.userRepository.find({
+
+    if (!req.body) {
+      handleExclusion(res)({
+        status: 400,
+        message: 'Provide body'
+      })
+
+      return
+    }
+
+    const { name, isPrivat, tags, description, songs } = req.body
+
+    this.userRepository.findOne({
       where: {
         id: req.session.user.id
       }
     })
-      .then(([createdBy]) => {
+      .then((createdBy) => {
+        if (!createdBy) {
+          handleExclusion(res)({
+            status: 501,
+            message: 'Sign in please'
+          })
+          return
+        }
+
         this.songRepository.find({
           where: getSongListIds(songs)
         })
           .then(songlist => {
+            if (songlist.length < 1) {
+              handleExclusion(res)({
+                status: 404,
+                message: 'Songs not found'
+              })
+              return
+            }
+
             this.playlistRepository.save({
               name,
               isPrivat,
@@ -50,11 +84,30 @@ export class PlaylistController implements IPlaylistController {
               songlist,
               createdBy
             })
-              .then((playlist) =>
+              .then((playlist) => {
+                const data = postRequestSelection(playlist, {
+                  id: true,
+                  name: true,
+                  isPrivat: true,
+                  tags: true,
+                  description: true,
+                  songlist: {
+                    id: true,
+                    songAuthor: true,
+                    title: true
+                  },
+                  createdBy: {
+                    id: true,
+                    username: true
+                  },
+                  createdAt: true
+                })
+
                 res.status(201).json({
                   message: 'Playlist created',
-                  data: playlist
+                  data
                 })
+              }
               )
               .catch((error) => {
                 handleExclusion(res)({
@@ -89,13 +142,37 @@ export class PlaylistController implements IPlaylistController {
       return
     }
 
+    if (req.session.user?.role === 'guest') {
+      handleExclusion(res)({
+        status: 403,
+        message: 'Permission denied'
+      })
+      return
+    }
+
     this.playlistRepository.findOne({
+      select: {
+        createdBy: {
+          id: true,
+          username: true
+        },
+        songlist: {
+          id: true,
+          songAuthor: true,
+          title: true
+        },
+        likedBy: {
+          id: true,
+          username: true
+        }
+      },
       where: {
         id: Number(req.query.id)
-      }
+      },
+      relations: ['createdBy', 'songlist', 'likedBy']
     })
-      .then((foundPlaylists) => {
-        if (!foundPlaylists) {
+      .then((foundPlaylist) => {
+        if (!foundPlaylist) {
           handleExclusion(res)({
             status: 404,
             message: 'Could not find appropriate playlist. Check provided data'
@@ -103,7 +180,15 @@ export class PlaylistController implements IPlaylistController {
           return
         }
 
-        res.status(200).json(foundPlaylists)
+        if ((foundPlaylist.isPrivat && req.session.user?.id !== foundPlaylist.createdBy?.id) && req.session.user?.role !== 'admin') {
+          handleExclusion(res)({
+            status: 403,
+            message: 'Permission denied. You should be playlist\'s owner'
+          })
+          return
+        }
+
+        res.status(200).json(foundPlaylist)
       })
       .catch((error) => {
         handleExclusion(res)({
@@ -115,7 +200,30 @@ export class PlaylistController implements IPlaylistController {
   }
 
   getAll = (req: Request, res: Response, next: NextFunction): void => {
+    if (req.session.user?.role === 'guest') {
+      handleExclusion(res)({
+        status: 403,
+        message: 'Permission denied'
+      })
+      return
+    }
+
     this.playlistRepository.find({
+      select: {
+        createdBy: {
+          id: true,
+          username: true
+        },
+        songlist: {
+          id: true,
+          songAuthor: true,
+          title: true
+        },
+        likedBy: {
+          id: true,
+          username: true
+        }
+      },
       relations: ['createdBy', 'songlist', 'likedBy']
     })
       .then((playlists) => {
@@ -140,13 +248,30 @@ export class PlaylistController implements IPlaylistController {
   }
 
   update = (req: Request, res: Response, next: NextFunction): void => {
+    if (req.session.user?.role === 'guest') {
+      handleExclusion(res)({
+        status: 403,
+        message: 'Permission denied'
+      })
+      return
+    }
+
+    if (!req.body) {
+      handleExclusion(res)({
+        status: 400,
+        message: 'Provide body'
+      })
+
+      return
+    }
+
     const { id, name, isPrivat, tags, description, likedBy, songlist } = req.body
 
     this.playlistRepository.findOne({
       where: {
         id: Number(id)
       },
-      relations: ['likedBy', 'songlist']
+      relations: ['likedBy', 'songlist', 'createdBy']
     })
       .then((playlist) => {
         if (!playlist) {
@@ -157,6 +282,15 @@ export class PlaylistController implements IPlaylistController {
 
           return
         }
+
+        if (playlist.createdBy?.id !== req.session.user?.id && req.session.user?.role !== 'admin') {
+          handleExclusion(res)({
+            status: 403,
+            message: 'Permission denied. You should be playlist\'s owner'
+          })
+          return
+        }
+
         this.userRepository.findOne({
           where: {
             id: likedBy ? Number(likedBy.id) : 0
@@ -175,10 +309,28 @@ export class PlaylistController implements IPlaylistController {
               playlist.likedBy = user ? [...playlist.likedBy!, user] : playlist.likedBy
 
               this.playlistRepository.save(playlist)
-                .then((platlist) => {
+                .then((savedPlatlist) => {
+                  const data = postRequestSelection(savedPlatlist, {
+                    id: true,
+                    name: true,
+                    isPrivat: true,
+                    tags: true,
+                    description: true,
+                    songlist: {
+                      id: true,
+                      songAuthor: true,
+                      title: true
+                    },
+                    createdBy: {
+                      id: true,
+                      username: true
+                    },
+                    createdAt: true
+                  })
+
                   res.status(200).json({
                     message: 'Playlist Updated',
-                    data: playlist
+                    data
                   })
                 })
                 .catch((error) => {
@@ -202,6 +354,7 @@ export class PlaylistController implements IPlaylistController {
                       status: 404,
                       message: 'Could not find any appropriate song'
                     })
+                    return
                   }
                   updatePlaylist(newSongs)
                 })
@@ -232,6 +385,15 @@ export class PlaylistController implements IPlaylistController {
   }
 
   delete = (req: Request, res: Response, next: NextFunction): void => {
+    if (req.session.user?.role !== 'admin') {
+      handleExclusion(res)({
+        status: 403,
+        message: 'Permission denied'
+      })
+
+      return
+    }
+
     deleteHandler(req, res, this.playlistRepository)
   }
 }

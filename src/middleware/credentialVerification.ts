@@ -36,7 +36,6 @@ export const credentialVerification = (req: Request, res: Response, next: NextFu
             }
           })
             .then((user) => {
-
               if (!user) {
                 handleExclusion(res)({
                   status: 401,
@@ -45,7 +44,7 @@ export const credentialVerification = (req: Request, res: Response, next: NextFu
 
                 return
               }
-              if (!req.session.user) {
+              if (!req.session.user?.id) {
                 req.session.user = user as UserEntity
               }
 
@@ -57,9 +56,11 @@ export const credentialVerification = (req: Request, res: Response, next: NextFu
         }
       })
     } else {
-      res.status(401).json({
-        message: 'Unauthorized'
-      })
+      req.session.user = { 
+        role: 'guest'
+      } as UserEntity
+
+      next()
     }
   } else {
     res.status(404).json({

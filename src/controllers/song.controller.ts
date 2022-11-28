@@ -3,7 +3,7 @@ import { Repository } from 'typeorm'
 
 import { Song, UserEntity } from '../database/entities'
 import { ISongController } from '../types'
-import { deleteHandler, handleExclusion } from '../utils'
+import { deleteHandler, handleExclusion, permissionToRepository, postRequestSelection } from '../utils'
 
 export class SongController implements ISongController {
   constructor (
@@ -18,9 +18,21 @@ export class SongController implements ISongController {
   private readonly userRepository: Repository<UserEntity>
 
   create = (req: Request, res: Response, next: NextFunction): void => {
-    const { title, lyrics, chords, description, songAuthor } = req.body
+    if (!req.session.user) {
+      handleExclusion(res)({
+        status: 501,
+        message: 'Session issue'
+      })
+      return
+    }
 
-    const song = new Song()
+    if (req.session.user?.role === 'guest') {
+      handleExclusion(res)({
+        status: 403,
+        message: 'Permission denied'
+      })
+      return
+    }
 
     if (!req.session.user?.id) {
       handleExclusion(res)({
@@ -30,13 +42,23 @@ export class SongController implements ISongController {
       return
     }
 
-    this.userRepository.find({
+    this.userRepository.findOne({
       where: { id: req.session.user.id }
     })
-      .then(([user]) => {
+      .then((user) => {
+        if (!user) {
+          handleExclusion(res)({
+            status: 404,
+            message: 'User not found. Sign-in please'
+          })
+          return
+        }
+
+        const { title, lyrics, chords, description, songAuthor } = req.body
+        const song = new Song()
+
         song.updatedBy = user
         song.createdBy = user
-
         song.title = title
         song.songAuthor = songAuthor
         song.lyrics = lyrics
@@ -66,22 +88,53 @@ export class SongController implements ISongController {
   }
 
   getAll = (req: Request, res: Response, next: NextFunction): void => {
-    this.songRepository.find({
-      select: {
+    if (!req.session.user) {
+      handleExclusion(res)({
+        status: 501,
+        message: 'Session issue'
+      })
+      return
+    }
+
+    const { role } = req.session.user
+
+    const select = permissionToRepository(role)({
+      guest: {
         id: true,
         songAuthor: true,
         title: true,
         lyrics: true,
         chords: true,
         description: true,
-        createdAt: true,
+        createdAt: true
+      },
+      member: {
+        updatedAt: true,
+        comments: true,
         createdBy: {
           id: true,
-          login: true
+          username: true
         },
-        comments: true
-      },
-      relations: ['createdBy', 'comments'],
+        updatedBy: {
+          id: true,
+          username: true
+        },
+        usedInPlaylists: true
+      }
+    })
+
+    const relations = permissionToRepository(role)({
+      member: {
+        comments: true,
+        createdBy: true,
+        updatedBy: true,
+        usedInPlaylists: true
+      }
+    })
+
+    this.songRepository.find({
+      select,
+      relations,
       order: {
         songAuthor: 'ASC',
         comments: {
@@ -109,19 +162,34 @@ export class SongController implements ISongController {
       return
     }
 
-    const { id } = req.query
+    if (!req.session.user) {
+      handleExclusion(res)({
+        status: 501,
+        message: 'Session issue'
+      })
+      return
+    }
 
-    this.songRepository.find({
+    const relations = permissionToRepository(req.session.user?.role)({
+      guest: {
+        comments: {
+          author: true
+        },
+        createdBy: true
+      },
+      member: {
+        usedInPlaylists: true
+      },
+      owner: {
+        updatedBy: true
+      }
+    })
+
+    this.songRepository.findOne({
       select: {
-        id: true,
-        songAuthor: true,
-        title: true,
-        lyrics: true,
-        chords: true,
-        description: true,
         createdBy: {
           id: true,
-          login: true
+          username: true
         },
         comments: {
           id: true,
@@ -129,31 +197,69 @@ export class SongController implements ISongController {
           createdAt: true,
           author: {
             id: true,
-            login: true
+            username: true
           },
           commentReplyId: true
         }
       },
-
       where: {
-        id: Number(id)
+        id: Number(req?.query?.id)
       },
-      relations: ['createdBy', 'comments'],
+      relations,
       order: {
         comments: {
           createdAt: 'ASC'
         }
       }
     })
-      .then((foundSongs) => {
-        if (foundSongs.length === 1) {
-          res.status(200).json(foundSongs)
-        } else {
+      .then((foundSong) => {
+        if (!foundSong) {
           handleExclusion(res)({
             status: 400,
             message: 'Provid correct id after ? sign'
           })
+          return
         }
+
+        if (!req.session.user) {
+          handleExclusion(res)({
+            status: 501,
+            message: 'Session issue'
+          })
+          return
+        }
+
+        const { id: sessionId, role } = req.session.user
+
+        const roleOrOwner =
+          +sessionId === +foundSong.createdBy!.id
+            ? 'owner'
+            : role as string
+
+        const chooseDataRelatingToRole = permissionToRepository(roleOrOwner)({
+          guest: {
+            id: true,
+            songAuthor: true,
+            title: true,
+            lyrics: true,
+            chords: true,
+            description: true,
+            createdAt: true,
+            updatedAt: true,
+            comments: true,
+            createdBy: true
+          },
+          member: {
+            usedInPlaylists: true
+          },
+          owner: {
+            updatedBy: true
+          }
+        })
+
+        const data = postRequestSelection(foundSong, chooseDataRelatingToRole)
+
+        res.status(200).json(data)
       })
       .catch((error) => {
         handleExclusion(res)({
@@ -165,41 +271,77 @@ export class SongController implements ISongController {
   }
 
   update = (req: Request, res: Response, next: NextFunction): void => {
-    const { id, songAuthor, title, lyrics, chords, description } = req.body // and updatedBy
+    if (!req.session.user) {
+      handleExclusion(res)({
+        status: 501,
+        message: 'Session issue'
+      })
+      return
+    }
+
+    const { id: sessionId, role } = req.session.user
+
+    if (role === 'guest') {
+      handleExclusion(res)({
+        status: 403,
+        message: 'Permission denied'
+      })
+      return
+    }
 
     this.songRepository.findOne({
+      select: {
+        createdBy: {
+          id: true
+        }
+      },
       where: {
-        id: Number(id)
+        id: Number(req.body.id)
+      },
+      relations: {
+        createdBy: true
       }
     })
       .then((song) => {
-        if (song != null) {
-          song.songAuthor = songAuthor ?? song.songAuthor
-          song.title = title ?? song.title
-          song.lyrics = lyrics ?? song.lyrics
-          song.chords = chords ?? song.chords
-          song.description = description ?? song.description
-
-          this.songRepository.save(song)
-            .then((song) => {
-              res.status(200).json({
-                message: 'Song Updated',
-                data: song
-              })
-            })
-            .catch((error) => {
-              handleExclusion(res)({
-                status: 400,
-                message: 'Song update failure',
-                error
-              })
-            })
-        } else {
+        if (!song) {
           handleExclusion(res)({
             status: 400,
             message: 'Invalid song ID'
           })
+          return
         }
+
+        const { songAuthor, title, lyrics, chords, description } = req.body
+
+        if (song.createdBy?.id !== sessionId && role !== 'admin') {
+          handleExclusion(res)({
+            status: 403,
+            message: 'Permission denied. You should be song owner'
+          })
+          return
+        }
+
+        song.songAuthor = songAuthor ?? song.songAuthor
+        song.title = title ?? song.title
+        song.lyrics = lyrics ?? song.lyrics
+        song.chords = chords ?? song.chords
+        song.description = description ?? song.description
+        song.updatedBy = req.session.user
+
+        this.songRepository.save(song)
+          .then((song) => {
+            res.status(200).json({
+              message: 'Song Updated',
+              data: song
+            })
+          })
+          .catch((error) => {
+            handleExclusion(res)({
+              status: 400,
+              message: 'Song update failure',
+              error
+            })
+          })
       })
       .catch((error) => {
         handleExclusion(res)({
@@ -210,7 +352,18 @@ export class SongController implements ISongController {
       })
   }
 
+  // ownerDeletion (req: Request, res: Response, next: NextFunction): void => {}
+
   delete = (req: Request, res: Response, next: NextFunction): void => {
+    if (req.session.user?.role !== 'admin') {
+      handleExclusion(res)({
+        status: 403,
+        message: 'Permission denied'
+      })
+
+      return
+    }
+
     deleteHandler(req, res, this.songRepository)
   }
 }

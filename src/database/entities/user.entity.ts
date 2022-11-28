@@ -14,7 +14,7 @@ export class UserEntity extends BaseEntity {
   @Column({ unique: true, nullable: false })
     login: string
 
-  @Column({ select: false, nullable: false })
+  @Column({ nullable: false })
     password: string
 
   @Column({ nullable: true })
@@ -26,10 +26,10 @@ export class UserEntity extends BaseEntity {
   @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date
 
-  @Column({ select: false, nullable: true })
+  @Column({ nullable: true })
     lastSingIn: Date
 
-  @Column('simple-json', { select: false, nullable: true })
+  @Column('simple-json', { nullable: true })
     config?: userConfig
 
   @OneToMany(() => SongComment, comment => comment.author, { onDelete: 'SET NULL', nullable: true })

@@ -4,7 +4,7 @@ import { Request, Response } from 'express'
 import { Repository } from 'typeorm'
 
 import { UserEntity } from '../database/entities'
-import { excludeFields, getMinskTime, signJWT, handleExclusion, deleteHandler } from '../utils'
+import { getMinskTime, signJWT, handleExclusion, deleteHandler, permissionToRepository, postRequestSelection } from '../utils'
 
 export class UserController implements IUserController {
   constructor (userRepository: Repository<UserEntity>) {
@@ -34,14 +34,18 @@ export class UserController implements IUserController {
 
       const user = new UserEntity()
       user.login = login
+      user.username = login
       user.password = hash
-      user.role = 'user'
+      user.role = 'member'
 
       this.userRepository.save(user)
         .then((user) =>
           res.status(201).json({
-            message: 'UserEntity successfully registered',
-            data: user
+            message: 'User successfully registered',
+            data: {
+              id: user.id,
+              login: user.login
+            }
           })
         )
         .catch((error) =>
@@ -55,16 +59,20 @@ export class UserController implements IUserController {
   }
 
   getAll = (req: Request, res: Response): void => {
+    if (req.session.user?.role !== 'admin') {
+      handleExclusion(res)({
+        status: 403,
+        message: 'Permission denied'
+      })
+
+      return
+    }
+
     this.userRepository.find({
-      select: {
-        id: true,
-        login: true,
-        songsAdded: {
-          id: true,
-          title: true
-        }
-      },
-      relations: { songsAdded: true }
+      relations: ['songsAdded', 'comments', 'createdPlaylists', 'likedPlaylists'],
+      order: {
+        id: 'ASC'
+      }
     })
       .then((users) => {
         if (users.length < 1) {
@@ -98,7 +106,7 @@ export class UserController implements IUserController {
   }
 
   signIn = (req: Request, res: Response): void => {
-    if (!req?.body?.login) {
+    if (!req?.body?.login || !req?.body?.password) {
       handleExclusion(res)({
         status: 400,
         message: 'Provide correct data'
@@ -109,11 +117,12 @@ export class UserController implements IUserController {
 
     const { login, password } = req.body
 
-    this.userRepository.find({
+    this.userRepository.findOne({
       where: { login },
       select: {
         id: true,
         login: true,
+        username: true,
         password: true,
         createdAt: true,
         lastSingIn: true,
@@ -124,31 +133,14 @@ export class UserController implements IUserController {
         }
       }
     })
-      .then((users) => {
-        if (users.length !== 1) {
+      .then((user) => {
+        if (!user) {
           handleExclusion(res)({
             status: 401,
             message: 'Wrong login'
           })
           return
         }
-
-        const [user] = users
-
-        /**
-         * add db token storing
-         * Mb it is doesn't needed
-         */
-        // if (req.session.user && user.id === req.session.user.id) {
-        //   return res.status(200).json({
-        //     message: 'login already logged in',
-        //     auth: {
-        //       dbtoken,
-        //       req.session.user.expiresIn
-        //     },
-        //     user: excludeFields(user, ['password', 'createdAt', 'updatedAt', 'id'])
-        //   })
-        // }
 
         bcryptjs.compare(password, user.password, (error, result) => {
           if (error) {
@@ -171,31 +163,44 @@ export class UserController implements IUserController {
                 return
               }
 
-              if (token) {
-                this.userRepository.save({
-                  id: user.id,
-                  lastSingIn: getMinskTime()
+              if (!token) {
+                handleExclusion(res)({
+                  status: 401,
+                  message: 'Token creation failure'
                 })
-                  .then(() => {
-                    req.session.user = user
-
-                    return res.status(200).json({
-                      message: 'Authorization successful',
-                      auth: {
-                        token,
-                        expiresIn
-                      },
-                      user: excludeFields(user, ['password', 'createdAt', 'updatedAt'])
-                    })
-                  })
-                  .catch((error) =>
-                    handleExclusion(res)({
-                      status: 502,
-                      message: '502: Database error',
-                      error
-                    })
-                  )
+                return
               }
+
+              this.userRepository.save({
+                id: user.id,
+                lastSingIn: getMinskTime()
+              })
+                .then(() => {
+                  req.session.user = user
+
+                  const data = postRequestSelection(user, {
+                    id: true,
+                    login: true,
+                    username: true,
+                    role: true
+                  })
+
+                  return res.status(200).json({
+                    message: 'Authorization successful',
+                    auth: {
+                      token,
+                      expiresIn
+                    },
+                    user: data
+                  })
+                })
+                .catch((error) =>
+                  handleExclusion(res)({
+                    status: 502,
+                    message: '502: Database error',
+                    error
+                  })
+                )
             })
           } else {
             handleExclusion(res)({
@@ -222,24 +227,60 @@ export class UserController implements IUserController {
       return
     }
 
-    const { id } = req.query
+    if (!req.session.user) {
+      handleExclusion(res)({
+        status: 501,
+        message: 'Session issue'
+      })
+      return
+    }
 
-    this.userRepository.find({
-      select: {
+    const { id: sessionId, role } = req.session.user
+
+    const roleOrOwner =
+    +sessionId === +req?.query?.id
+      ? 'owner'
+      : role as string
+
+    const select = permissionToRepository(roleOrOwner)({
+      guest: {
         id: true,
-        login: true,
+        username: true,
         createdAt: true,
-        lastSingIn: true,
-        config: {
-          darkMode: true
-        }
+        lastSingIn: true
       },
-      relations: ['songsAdded', 'comments'],
-      where: {
-        id: Number(id)
+      member: {
+        songsAdded: true,
+        createdPlaylists: true,
+        likedPlaylists: true
+      },
+      owner: {
+        login: true,
+        role: true,
+        config: true,
+        comments: true
       }
     })
-      .then(([user]) => {
+
+    const relations = permissionToRepository(roleOrOwner)({
+      member: {
+        songsAdded: true,
+        createdPlaylists: true,
+        likedPlaylists: true
+      },
+      owner: {
+        comments: true
+      }
+    })
+
+    this.userRepository.findOne({
+      select,
+      relations,
+      where: {
+        id: Number(req.query.id)
+      }
+    })
+      .then((user) => {
         if (!user) {
           handleExclusion(res)({
             status: 400,
@@ -258,7 +299,22 @@ export class UserController implements IUserController {
       )
   }
 
+  // deleteMyownAccount = (req: Request, res: Response): void => {}
+
+  // update = (req: Request, res: Response): void => {
+
+  // }
+
   delete = (req: Request, res: Response): void => {
+    if (req.session.user?.role !== 'admin') {
+      handleExclusion(res)({
+        status: 403,
+        message: 'Permission denied'
+      })
+
+      return
+    }
+
     deleteHandler(req, res, this.userRepository)
   }
 }
