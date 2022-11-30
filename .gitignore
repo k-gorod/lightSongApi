@@ -1,0 +1,16 @@
+yarn.lock
+yarn-error.log
+package-lock.json
+node_modules
+.env
+build/*
+!build/index.html
+
+src/database/migrations/*
+
+configExample.json
+
+**/migrations/*
+
+config.txt
+

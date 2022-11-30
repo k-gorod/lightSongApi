@@ -1,0 +1,32 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "CommonJS",
+        "moduleResolution": "node",
+        "sourceMap": true,
+        "outDir": "./build",
+        "rootDir": "./src",
+        /* Strict Type-Checking Options */
+        "strict": true,
+        /* Module Resolution Options */
+        "esModuleInterop": true,
+        /* Advanced Options */
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "strictPropertyInitialization": false,
+        "baseUrl": "./",
+        "paths": { // beacuse baseUrl: "src" working incorrect.
+            // "@database": ["src/database"],
+            "@types": ["src/types"]
+            // "@controllers": ["src/controllers"],
+            // "@middleware": ["src/middleware"],
+            // "@routes": ["src/routes"],
+            // "@utils": ["src/utils"],
+        }
+    },
+    "include": [
+        "src/*"
+    ]
+}
