@@ -14,6 +14,7 @@ export const createUserRouter = (router: Router, userController: IUserController
   router.get('/user/get-all', credentialVerification, userController.getAll!)
   router.get('/user/get', credentialVerification, userController.get!)
   router.delete('/user/delete', credentialVerification, userController.delete!)
+  router.put('/user/update', credentialVerification, userController.update!)
 
   return router
 }

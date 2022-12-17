@@ -4,6 +4,7 @@ export { signJWT } from './signJWT'
 export { permissionToRepository } from './permissionToRepository'
 
 import { Entities } from '@types'
+import bcryptjs from 'bcryptjs'
 import { Request, Response } from 'express'
 import { Repository } from 'typeorm'
 
@@ -116,4 +117,16 @@ export const deleteHandler = (req: Request, res: Response, repository: Repositor
         error
       })
     })
+}
+
+export const hashString = async (string: string): Promise<string> => {
+  return await new Promise((resolve, reject) => {
+    bcryptjs.hash(string, 12, (error, hash) => {
+      if (error) {
+        reject(error)
+      } else {
+        resolve(hash)
+      }
+    })
+  })
 }

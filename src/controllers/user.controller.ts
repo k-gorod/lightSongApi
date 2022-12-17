@@ -4,7 +4,7 @@ import { Request, Response } from 'express'
 import { Repository } from 'typeorm'
 
 import { UserEntity } from '../database/entities'
-import { getMinskTime, signJWT, handleExclusion, deleteHandler, permissionToRepository, postRequestSelection } from '../utils'
+import { getMinskTime, signJWT, handleExclusion, deleteHandler, permissionToRepository, postRequestSelection, hashString } from '../utils'
 
 export class UserController implements IUserController {
   constructor (userRepository: Repository<UserEntity>) {
@@ -22,40 +22,38 @@ export class UserController implements IUserController {
 
   register = (req: Request, res: Response): void => {
     const { login, password } = req.body
+    hashString(password)
+      .then((hash) => {
+        const user = new UserEntity()
+        user.login = login
+        user.username = login
+        user.password = hash
+        user.role = 'member'
 
-    bcryptjs.hash(password, 12, (error, hash) => {
-      if (error) {
+        this.userRepository.save(user)
+          .then((user) =>
+            res.status(201).json({
+              message: 'User successfully registered',
+              data: {
+                id: user.id,
+                login: user.login
+              }
+            })
+          )
+          .catch((error) =>
+            handleExclusion(res)({
+              status: 401,
+              message: 'Registration failed',
+              error
+            })
+          )
+      })
+      .catch((error) => {
         handleExclusion(res)({
           status: 500,
           error
         })
-        return
-      }
-
-      const user = new UserEntity()
-      user.login = login
-      user.username = login
-      user.password = hash
-      user.role = 'member'
-
-      this.userRepository.save(user)
-        .then((user) =>
-          res.status(201).json({
-            message: 'User successfully registered',
-            data: {
-              id: user.id,
-              login: user.login
-            }
-          })
-        )
-        .catch((error) =>
-          handleExclusion(res)({
-            status: 401,
-            message: 'Registration failed',
-            error
-          })
-        )
-    })
+      })
   }
 
   getAll = (req: Request, res: Response): void => {
@@ -142,7 +140,7 @@ export class UserController implements IUserController {
           return
         }
 
-        bcryptjs.compare(password, user.password, (error, result) => {
+        bcryptjs.compare(password, user.password, (error, result) => { // TODO Promise
           if (error) {
             handleExclusion(res)({
               status: 401,
@@ -301,9 +299,126 @@ export class UserController implements IUserController {
 
   // deleteMyownAccount = (req: Request, res: Response): void => {}
 
-  // update = (req: Request, res: Response): void => {
+  update = (req: Request, res: Response): void => {
+    if (!req?.query?.id) {
+      handleExclusion(res)({
+        status: 400,
+        message: 'Provide id after ? sign'
+      })
+      return
+    }
 
-  // }
+    if (!req.session.user) {
+      handleExclusion(res)({
+        status: 501,
+        message: 'Session issue'
+      })
+      return
+    }
+
+    this.userRepository.findOne({
+      where: {
+        id: req.session.user.id
+      }
+    })
+      .then((currentUser) => {
+        if (!currentUser) {
+          handleExclusion(res)({
+            status: 401,
+            message: 'Unauthorized'
+          })
+          return
+        }
+
+        if ((Number(currentUser.id) !== Number(req?.query?.id) && currentUser.role !== 'admin')) {
+          handleExclusion(res)({
+            status: 403,
+            message: 'Permission denied'
+          })
+          return
+        }
+
+        this.userRepository.findOne({
+          where: {
+            id: Number(req.query.id)
+          }
+        })
+          .then((targetUser) => {
+            if (!targetUser) {
+              handleExclusion(res)({
+                status: 404,
+                message: 'User not found'
+              })
+              return
+            }
+
+            if (targetUser.role === 'admin') {
+              handleExclusion(res)({
+                status: 403,
+                message: 'Permission denied'
+              })
+              return
+            }
+
+            const { password, username, role, config } = req.body
+
+            const updateUser = (hashedPassword?: any): void => {
+              targetUser.password = hashedPassword ?? targetUser.password
+              targetUser.username = username ?? targetUser.username
+              targetUser.config = config ?? targetUser.config
+
+              if (targetUser.role === 'admin') {
+                targetUser.role = role ?? targetUser.role
+              }
+
+              this.userRepository.save(targetUser)
+                .then(() => {
+                  res.status(200).json({
+                    message: 'Updated successfully',
+                    data: targetUser
+                  })
+                })
+                .catch((error) => {
+                  handleExclusion(res)({
+                    status: 403,
+                    message: 'Unable to update',
+                    error
+                  })
+                })
+            }
+
+            if (password) {
+              hashString(password)
+                .then((hash) => {
+                  updateUser(hash)
+                })
+                .catch((error) => {
+                  handleExclusion(res)({
+                    status: 501,
+                    message: 'Unable to hash password',
+                    error
+                  })
+                })
+            } else {
+              updateUser()
+            }
+          })
+          .catch((error) => {
+            handleExclusion(res)({
+              status: 501,
+              message: 'Error: Unable to update',
+              error
+            })
+          })
+      })
+      .catch((error) => {
+        handleExclusion(res)({
+          status: 501,
+          message: 'Session issue',
+          error
+        })
+      })
+  }
 
   delete = (req: Request, res: Response): void => {
     if (req.session.user?.role !== 'admin') {
