@@ -21,12 +21,13 @@ export class UserController implements IUserController {
   }
 
   register = (req: Request, res: Response): void => {
-    const { login, password } = req.body
+    const { login, password, username } = req.body
+
     hashString(password)
       .then((hash) => {
         const user = new UserEntity()
         user.login = login
-        user.username = login
+        user.username = username ?? login
         user.password = hash
         user.role = 'member'
 
